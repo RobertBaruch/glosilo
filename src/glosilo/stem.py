@@ -7,9 +7,10 @@ Usage:
 
 import sys
 from glosilo import eostem
+from glosilo.structs import CoredWord
 
 
-def format_cored_word(cored) -> str:
+def format_cored_word(cored: CoredWord) -> str:
     """Format a CoredWord for display."""
     parts = []
 
@@ -44,7 +45,7 @@ def format_cored_word(cored) -> str:
     return "\n".join(parts)
 
 
-def main():
+def main() -> None:
     """Main entry point for the stem command."""
     if len(sys.argv) < 2:
         print("Usage: python -m glosilo.stem [--debug] <word>", file=sys.stderr)
@@ -53,8 +54,8 @@ def main():
         print("  python -m glosilo.stem --debug nekompreneble", file=sys.stderr)
         sys.exit(1)
 
-    debug = False
-    word = None
+    debug: bool = False
+    word: str | None = None
 
     # Parse arguments
     for arg in sys.argv[1:]:
