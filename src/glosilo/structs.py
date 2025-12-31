@@ -1,0 +1,49 @@
+"""Data structures for the Glosilo project."""
+
+from __future__ import annotations
+import dataclasses
+
+
+@dataclasses.dataclass
+class GlossColumn:
+    """A one-word column in a gloss."""
+
+    word: str
+    gloss: str
+    colloquialism: str
+
+
+@dataclasses.dataclass
+class AnalyzedDefinition:
+    """An analyzed definition."""
+
+    word: str
+    root: str
+    prefixes: list[str]
+    definition: tuple[str, str]
+    suffixes: list[str]
+
+
+@dataclasses.dataclass
+class CoredWord:
+    """A cored word."""
+
+    orig_word: str
+    prefixes: list[str]
+    # The core of a word is the part that is left after all prefixes and suffixes
+    # and endings have been removed.
+    core: str
+    suffixes: list[str]
+    preferred_ending: str
+    definitions: list[str]
+    preferred_definition: str
+    core_definition: str
+    parts: list[CoredWord] = dataclasses.field(default_factory=list)
+
+    def __str__(self) -> str:
+        parts = ", ".join(str(part) for part in self.parts)
+        return (
+            f"{self.orig_word} = {self.prefixes}+{self.core}({self.core_definition})"
+            f"+{self.suffixes}+{self.preferred_ending} = {self.preferred_definition} "
+            f"[{parts}]"
+        )

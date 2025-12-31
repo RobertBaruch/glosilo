@@ -1,0 +1,789 @@
+abomeni: to disgust
+aĉa: awful
+aĉaĵo: awful thing
+acetileno: acetylene
+# acetilen-lampo: acetylene lamp
+acida: acidic
+afekcii: to affect
+afekti: to feign
+afliktito: afflicted
+agaĵo: activity
+ago: action
+aĝo: age
+akiri: to acquire
+akra: sharp
+akre: sharply
+aktiva: active
+aktivi: to be active
+aktivo: asset
+alkohol-bruli: to burn with alcohol
+alkohol-brulilo: alcohol-burner
+alkaloido: alkoloid
+almenaŭ: at least
+alproksimi: to come close
+alta: high
+alti: to be high
+altanima: high-souled
+ambulanco: field hospital
+amikeme: in friendship
+amorfa: amorphous
+angulo: corner
+# anim-paraliza: soul-paralyzing
+animata: animate
+animiga: animating
+anomalio: anomaly
+anksio: anxiety
+anstataŭ: instead of
+antaŭ: before
+antaŭa: prior
+antaŭe: prior
+antaŭkruro: foreleg
+antaŭpagi: to prepay
+antaŭsigno: omen
+antropomorfa: anthropomorphic
+aparta: particular
+aparte: particularly
+aparti: to be separate
+aplikante: applying
+arklumo: arc-light
+artefari: artfully to make
+artefarita: artificial
+artefarite: artificially
+artikulacia: articulate
+artilerio: artillery
+atendi: to await
+atenti: to pay attention to
+atingaĵo: attainment
+atingi: to reach
+atingita: reached
+atingo: reach
+atribui: to attribute
+aŭ: or
+aŭtoritatulo: authority
+avii: to fly
+bakteriologia: bacteriological
+balzami: to embalm
+balzamiĝa: embalming
+balzamiĝado: embalming
+balzamiĝo: embalming
+balzamita: embalmed
+bandaĝo: bandage
+bankkonto: bank-account
+baziĝi: to be based
+belo: beauty
+bieno: grounds
+blanka: white
+bluokula: blue-eyed
+bobeli: to bubble
+boksi: to box
+bonfamo: positive-fame
+bonfari: to do good
+bonhumora: good-humored
+brako: arm
+brili: to shine
+bruligi: to burn
+bruligo: burning
+bruliganta: burning
+brulilo: burner
+bunseno: Bunsen
+bunsen-brulilo: Bunsen-burner
+ĉasiĝi: to be chased
+ĉasiĝo: being chased
+ĉefleŭtenanto: First Lieutenant
+ĉeftitolo: main title
+ĉeesti: to be present
+celo: goal
+ĉi: here-particle
+cindri: to burn to ashes
+cindrigi: to incinerate
+cirkla: circular
+ĉiom: all
+ĉi-nokte: tonight
+d-ro: Dr.
+damni: to damn
+damnito: damned
+darvinismo: Darwinism
+daŭri: to last
+deformi: to deform
+degenerado: degeneration
+dekadenco: decadence
+dekano: dean
+demandi: to question
+demando: question
+# demon-animo: demon-soul
+demona: demonic
+demonstro: demonstration
+denaska: native
+depresia: depressed
+desupri: to go down
+detale: in detail
+dezerti: to desert
+dezertita: deserted
+diableco: diabolism
+diboĉo: debauchery
+diboĉaĵo: debauch
+differenca: different
+dignulo: dignitary
+dilati: to dilate
+dio: god
+disigita: separated
+diskreta: discreet
+disputo: dispute
+distinginda: distinguished
+doktora: doctor
+domnumero: house-number
+drinki: to drink alcohol
+dudeko: twenty
+duonhoma: half-human
+duonsenti: to half-sense
+duonvidi: to half-see
+ebeni: to be level
+eble: possibly
+elfosado: excavation
+efiki: to have an effect
+efrito: efreet
+ekfrapi: to smack
+ekfrenezigita: maddened
+ekkapti: to seize
+ekkrio: shriek
+ekipita: equipped
+eklipsi: to eclipse
+eklipsiĝi: to be eclipsed
+ekspertizo: appraisal
+ekspreso: express
+ekster: outside
+ekstere: outside
+eksterordinare: extraordinarily
+ekstrema: extreme
+ekzameno: examination
+ekzempli: to be an example
+elĉerpiĝi: to be exhausted
+elĉerpiĝo: exhaustion
+elekto: choice
+elekti: to choose
+elkovi: to hatch an egg
+eliksiro: elixir
+elimino: elimination
+elkreski: to sprout
+elrevi: to be disappointed
+elrevige: disappointedly
+eltiri: to withdraw
+eltirante: withdrawing
+eltrovi: to discover
+eltroviĝi: to be discovered
+endanĝeri: to be in danger
+endosi: to endorse
+enliti: to go to bed
+enteri: to be buried
+ensorĉi: to bewitch
+ensorĉita: bewitched
+enterigita: interred
+enterigo-kampo: burial-ground
+entombi: to be entombed
+entrepreni: to undertake
+eriko: Eric
+ero: item
+erudicia: erudite
+esplori: to explore
+etendi: to extend
+eviti: to avoid
+fabriko: factory
+fabrikurbo: factory-city
+fakultato: faculty
+fantasma: phantasmal
+fantasmo: phantasm
+fariĝi: to be made
+farmdomo: farm-house
+febra: feverish
+feliĉa: lucky
+feliĉo: luck
+festanto: reveler
+fidi: to trust
+filantropia: philanthropic
+filantropio: philanthropy
+finfine: finally
+finiĝi: to be finished
+fiziologia: physiological
+fiziologio: physiology
+flako: puddle
+flugi: to fly
+fluido: fluid
+fojo: time
+fokusi: to focus
+fokusita: focused
+fonti: to source
+fonto: source
+for: away
+forbruli: to burn up
+forbruligilo: incinerator
+forkuri: to run away
+foriri: to leave
+foririta: gone
+forlasi: to leave
+formanĝi: to eat away
+forpasi: to pass away
+forpasinta: passed away
+forporti: to carry away
+forteni: to hold away
+fortika: sturdy
+forvagi: to wander off
+fosforesko: phosphorescence
+frakasi: to shatter
+framo: frame
+freneza: insane
+frenezo: insanity
+freneziga: maddening
+freŝeco: freshness
+fumo: smoke
+funebra: funereal
+funebro: funereal-grief
+funebraĵisto: mortician
+funebraĵo: funeral
+funkciigi: to put in motion
+futo: foot
+gabardino: gabardine
+garbo: sheaf
+gazono: lawn
+gipso: plaster
+gipsumi: to plaster
+ĝisnun: until now
+ĝisnuna: hitherto
+glatdrapa: worsted
+gorilo: gorilla
+gracia: graceful
+greso: grass
+grimpoplanto: vine
+grunti: grunt
+ĝusta: precise
+ĝuste: precisely
+halo: hall
+halucino: hallucination
+hantiĝi: to be haunted
+hantiĝo: being haunted
+hararo: hair
+hardi: to harden
+hasta: hasty
+havanta: having
+hazarda: random
+hejme: at home
+hejmen: homewards
+help: help
+helpi: to help
+heterogena: heterogenous
+hida: hideous
+histerio: hysteria
+horloĝo: clock
+horora: horrible
+iĝi: to become
+igi: to cause
+ilinojso: Illinois
+imagita: imagined
+improvizi: to improvise
+improvizita: improvised
+incizi: to incise
+incizaĵo: incision
+indiko: indication
+indulo: worthy
+infano: child
+# infero-foso: hell-pit
+injektante: injecting
+inklini: to be inclined to
+iom: some
+iome: by some amount
+iomgrade: gradually
+iufoje: from time to time
+izoli: to isolate
+julio: July
+junulo: youth
+ĵus: just
+kadavreja: morgue
+kadavrejo: morgue
+kadavromanĝo: corpse-eating
+kadavromanĝulo: ghoul
+kakofonio: cacophony
+kalkuli: to calculate
+kalkulo: calculation
+kalvinismo: Calvinism
+kamarado: comrade
+kampara: rural
+kampuso: campus
+kanibalo: cannibal
+kapkuseno: pillow
+karnomanĝa: carnivorous
+kaŝ-enporti: to smuggle
+kaŝi: to hide
+kataklismo: cataclysm
+katastrofo: catastrophe
+kaŭzi: to cause
+kavio: guinea-pig
+kavio-korpo: guinea-pig body
+kazo: case
+kial: why
+kialo: reason
+kirurgia: surgical
+kirurgiisto: surgeon
+kirurgie: surgically
+kirurgio: surgery
+klaki: to clack
+klimaksa: climactic
+klini: to lean
+kobajo: guinea pig
+kolego: colleague
+kompata: sympathetic
+kompatinda: pitiful
+konduki: to lead
+konfida: confidential
+konflikti: to conflict
+kongo: Congo
+konkeri: conquer
+konsentante: agreeing
+konsideri: to consider
+konsilindeco: advisability
+konsterna: appalling
+kontesti: to deny
+kontraŭ-darvinismo: anti-Darwinism
+kontraŭ-niĉeismo: anti-Nietzscheism
+kontraŭluksa: sumptuary
+kontuzi: to bruise
+konvinko: conviction
+konvulsii: to convulse
+korligi: to be close
+korligita: close
+korolario: corollary
+kosti: to cost
+kosto: cost
+kovi: to incubate
+krado: bar
+kredi: to believe
+kreito: creature
+kreski: to grow
+krii: to cry out
+krono: crown
+kuglo: shot
+kulpe: due
+kun: with
+kunhavi: to have in common
+kunligi: to couple
+kunligita: coupled
+kunstudento: fellow-student
+kunulo: companion
+kunuleco: companionship
+kuracisto: physician
+kuraĉi: to stumble
+kutima: customary
+kvadrata: square
+kvalito: quality
+kvankam: although
+laboro: work
+laŭsupoze: supposed to
+leĝdonado: legislation
+leĝdoni: to legislate
+lerto: skill
+levi: to lift
+liberi: to be free
+licenci: to license
+licencita: licensed
+ligi: to bind
+ligante: binding
+limi: to limit
+loko: place
+longa: long
+luiganto: landlord
+luigantino: landlady
+majoro: Major
+makabra: macabre
+maksimumigi: to maximimize
+# maladekvata: inadequate
+# malagnoskado: ignoring
+# malagrable: disagreeable
+# malaperita: disappeared
+# malatentita: disregarded
+# malbonfama: infamous
+# malbonfamo: infamy
+# malbonhumora: ill-humored
+# malbrila: dim
+# malgrandanima: stingy
+# malhela: dark
+# malinkline: reluctantly
+# malinteligenta: unintelligent
+# malkaŝe: openly
+# malkongrua: incompatible
+# malkovrado: discovery
+# malkovrita: discovered
+# malluksa: shabby
+# mallumo: dark
+# malnova: old
+# malracie: irrational
+# malrapide: slowly
+# malrapidigita: slowed down
+# malsane: unhealthily
+# malsanulo: sick
+# malsukceso: failure
+# malvarma: cold
+manki: to lack
+manĝinta: eaten
+marta: March
+maŝinaro: machinery
+masono: masonry
+materialismo: materialism
+materialo: material
+medicina: medical
+medicino: medicine
+memiluzio: self-delusion
+memoferdona: self-sacrificing
+memoferdono: self-sacrifice
+memorita: recalled
+metafora: metaphorical
+meti: to place
+mikrob-malsano: microbial-disease
+miksturo: mixture
+miksi: to mix
+minaca: threatening
+minace: threateningly
+minaci: to threaten
+minaco: threat
+mirindeco: amazingness
+misformi: to deform
+misformiga: deforming
+mjelo: spinal cord
+modifaĵo: modification
+mokante: mocking
+mokita: mocked
+mola: soft
+mor-limi: to limit by morals
+mor-limigata: hide-bound
+morta: deadly
+mortavizo: obituary
+mortigi: to kill
+mortinto: dead
+mortintaĵo: dead body
+mueli: to mill
+multampleksa: extensive
+multipliki: to multiply
+multokaze: on many occasions
+municipa: municipal
+mutili: to mutilate
+nadlo: needle
+naftolampo: oil-lamp
+naturo: nature
+naŭzi: to nauseate
+naŭziga: nauseating
+neadekvata: inadequate
+nebalzamita: unembalmed
+nebulo: fog
+necesi: to be necessary
+neebla: impossible
+neesprimeble: inexpressibly
+nefleksebla: inflexible
+negi: to deny
+neimagema: unimaginative
+nekompreneble: incomprehensibly
+nematura: immature
+neparenca: unrelated
+neparolebla: unspeakable
+nepra: essential
+nerekonebla: unrecognizable
+nervozi: to be nervous
+nervozigi: to make nervous
+netolerema: intolerant
+niĉeismo: Nietzscheism
+noca: noxious
+noci: to be noxious to
+noktomezo: midnight
+nomi: to name
+normale: normally
+nova: new
+obuso: artillery shell
+ofta: frequent
+ofte: often
+okazo: occasion
+okazaĵo: incident
+okulvitra: spectacled
+okulvitro: spectacles
+omaĝaĵo: tribute
+ombro: shadow
+onidiro: rumor
+oportuno: opportunity
+paĝo: page
+palblua: pale blue
+pansi: to bandage
+partumi: to share
+parenca: related
+paroli: to speak
+pasigi: to pass
+paŝo: step
+perfekti: to be perfect
+perforta: violent
+perforte: violently
+permesi: to permit
+persekutita: persecuted
+persvado: persuasion
+petadema: importunate
+petegante: pleading
+pezado: weighing
+pezi: to weigh
+piediraĉanta: staggering
+piedo: foot
+piedpinte: to be on tip toes
+piedpremi: to trample
+piki: to pierce
+pikilo: pick
+pina: pine
+plena: full
+plejaĝa: aged
+plejaĝulo: elder
+pleni: to be filled
+plenigi: to fill
+plenscia: learned
+plia: more
+plilaŭti: to be more loud
+plimulto: most
+plu: more
+plurfoje: several times
+peko: sin
+persistado: persistence
+perturbigita: perturbed
+peza: heavy
+pioĉo: pickaxe
+plenegiĝi: to be crammed full
+pojno: wrist
+pollandano: Pole
+pordo: door
+porti: to carry
+postea: later
+poŝlampo: flashlight
+postdiploma: post-graduate
+postnoktomezo: early-morning
+poststrio: wake
+posttagmezo: afternoon
+postuli: to require
+postulo: requirement
+postvivi: to survive
+preparita: prepared
+premio: prize
+preta: ready
+preti: to be ready
+prieksperimentato: experimental-subject
+priskribi: to describe
+priskribo: description
+#profesor-doktoro: professor-doctor
+profitante: profiting
+profunda: deep
+progreso: progress
+projekto: project
+prokrasti: to procrastinate
+prokrasto: delay
+proksima: near
+proksimume: approximately
+propra: own
+provo: test
+provtubo: test-tube
+pruvi: to prove
+psikiatria: psychiatric
+ptolemaismo: Ptolemaism
+pugni: to fight
+pugno: fight
+# publik-servo: public-service
+puniĝi: to be punished
+pura: clean
+puritanismo: puritanism
+putrado: decay
+rapide: rapidly
+reanimacio: reanimation
+reanimado: reanimation
+reanimi: to reanimate
+refunkcii: to function again
+refunkciigita: made to function again
+rego: rule
+rekonscii: to regain consciousness
+remburi: to pad
+renversante: overturning
+renversita: overturned
+repeli: repel
+reptilia: reptilian
+reptilio: reptile
+respondi: to answer
+restari: to be restored
+resti: to remain
+resto: remains
+retorto: retort
+retrorigardi: to look back
+revenanta: returning
+revivi: to be revived
+rezoluta: resolute
+rezoni: to reason
+ri: (ungendered pronoun)
+# ricevo-tombo: receiving-tomb
+ridetanta: grinning
+rimarki: to notice
+ripeti: to repeat
+rompiĝi: to be broken
+sabatismo: Sabbatism
+sadisma: sadistic
+salpetro: saltpeter
+saltante: jumping
+samtempe: at the same time
+ŝanceliĝi: to waver
+ŝanĝi: to change
+ŝanĝo: change
+sangofridi: chill the blood
+# sango-spuro: blood-trail
+sangomakuli: to stain with blood
+sanregulo: health-regulation
+# sanregularo: health-regulations
+satana: satanic
+sceno: scene
+# sciencejo: place of science
+seanco: session
+# sekcejo: dissection room
+sekci: to dissect
+sekci-tablo: dissection table
+sekrete: secretly
+sekvi: to follow
+sekure: securely
+sekuri: to be secure
+sencerba: brainless
+sendisturbate: without
+senemotie: unemotionally
+senespera: hopeless
+senespereco: hopelessness
+senesprima: expressionless
+senforma: formless
+sengasa: gasless
+senhava: needy
+senhavulo: poor
+senhezite: unhesitatingly
+senkapa: headless
+senmova: immobile
+senmoveco: immobility
+sennecese: unnecessary
+senneĝa: snowless
+sennoma: nameless
+senpense: without a thought
+senrezulta: without result
+sensenti: to be without feeling
+senŝpata: spadeless
+senspira: breathless
+sentema: sensitive
+senti: to feel
+sentima: fearless
+sento: sensation
+senutila: useless
+senviva: lifeless
+senzorge: carelessly
+sepulti: to preserve a body
+silueti: to silhouette
+simileco: similarity
+ŝimo: mould
+sinistra: sinister
+skotlanda: Scottish
+skrapi: to scrape
+skrapvundi: to scrape
+slabo: slab
+sola: lone
+solvaĵo: solution
+sonkoloro: timbre
+sonori: to sound
+sopiri: to long for
+ŝoveli: to shovel
+ŝovelilo: shovel
+ŝovelilpleno: shovelful
+spasmo: spasm
+ŝpato: spade
+speciala: special
+specimeno: specimen
+sperta: expert
+stabo: general staff
+stacio: station
+starti: to start
+stelita: starred
+ŝtelpaŝi: sneak
+stetoskopo: stethoscope
+stileto: stiletto
+stoike: stoically
+stoplo: stubble
+stranga: strange
+streĉita: stretched
+studento: student
+subkelo: subcellar
+subtegmento: attic
+subtenante: supporting
+subtere: underground
+sukceso: success
+super: above
+superforta: overpowering
+supernorma: supernormal
+superrigardado: supervision
+superrigardi: to supervise
+superrigardo: overlook
+surprize: surprisingly
+surskribo: inscription
+tamtamo: tamtam
+# telefon-stacio: telephone-station
+temi: to concern
+tempo: time
+teruro: terror
+tiel-nomata: so-called
+tiel-nomi: so-to-name
+tifoido: typhoid
+timemo: timidity
+tim-sensenti: to chill
+tim-sensentigi: to be chilled
+tiri: to pull
+titana: titanic
+tiufoje: that time
+toleri: to tolerate
+torso: torso
+tradicio-ligi: to bind by tradition
+tradicio-ligita: tradition-bound
+trafi: to come across
+trankvili: to be calm
+transmisi: to transmit
+transplanti: to transplant
+trapiki: to pierce
+trarompi: to break through
+trembrili: to sparkle
+treni: to drag
+trinkinta: drunk
+trolabori: to overwork
+trolaborigita: overworked
+troŝarĝi: to overburden
+troŝarĝita: overburdened
+tutmalluma: completely dark
+tutkora: whole-hearted
+tutkore: whole-heartedly
+tro: too much
+ululi: to ululate
+ungado: clawing
+ungi: to claw
+ungo-morti: to die by clawing
+uniformo: uniform
+universitato: university
+urbregistaro: mayor
+vaganto: wanderer
+vagi: to wander
+vakso: wax
+veki: to awaken
+vera: true
+vere: truly
+verko: work
+verŝanta: pouring out
+# vesperto-flugi: bat-to-fly
+vesperto-flugilo: bat-wing
+vesperto: bat
+vico: row
+vigla: vigorous
+vigle: vigorously
+viktimo: victim
+vitala: vital
+viv-aŭ-morta: life-or-death
+vivoverko: life's work
+vivpovo: life-force
+vivoprocezo: life-process
+vojo: road
+volframo: tungsten
+volonta: willing
+volonti: to be willing
+vortriĉa: word-rich
+zorgi: to take care
+zenito: zenith

@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "glosilo"
+dynamic = ["version"]
+description = "Attempts to create English glosses from Esperanto text"
+readme = "README.md"
+authors = [{ name = "Zekri Drako", email = "robert.c.baruch@gmail.com" }]
+keywords = ["Esperanto", "glossing", "NLP"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: Apache License",
+    "Operating System :: OS Independent",
+]
+requires-python = ">=3.8"
+license = {text="Apache License, Version 2.0"}
+
+[tool.setuptools.dynamic]
+version = { attr = "glosilo.VERSION" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["glosilo*"]
+namespaces = false
