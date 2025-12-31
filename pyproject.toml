@@ -24,3 +24,6 @@ version = { attr = "glosilo.VERSION" }
 where = ["src"]
 include = ["glosilo*"]
 namespaces = false
+
+[project.scripts]
+stem = "glosilo.stem:main"
