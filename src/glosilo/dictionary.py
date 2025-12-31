@@ -5,7 +5,7 @@ import pathlib
 import re
 
 from glosilo import consts
-from glosilo import nlp
+from glosilo import eostem
 from glosilo import structs
 
 
@@ -35,7 +35,7 @@ class Dictionary:
         key = key.strip()
         value = value.strip()
 
-        analysis = nlp.core_word(key, key == self.debug_word)
+        analysis = eostem.core_word(key, key == self.debug_word)
         value = value.replace("(", "").replace(")", "")
         defs = [part.strip() for part in re.split("[;,]", value)]
         pref_def = self._choose_preferred_translation(key, value)
@@ -196,7 +196,7 @@ class Dictionary:
         return analysis
 
     def _reanalyze(self, word: str) -> structs.CoredWord:
-        analysis = nlp.core_word(word, debug=self.debug)
+        analysis = eostem.core_word(word, debug=self.debug)
         if self.debug:
             print(f"  Initial reanalysis: {analysis}")
         # Start with all prefixes and suffixes, and strip prefixes first.
@@ -226,8 +226,8 @@ class Dictionary:
         """Analyzes a hyphenated word."""
         orig_word = word
         word = word.lower()
-        word = nlp.maybe_strip_plural_acc_ending(word)
-        word = nlp.replace_verb_ending(word)
+        word = eostem.maybe_strip_plural_acc_ending(word)
+        word = eostem.replace_verb_ending(word)
         full_analysis = self._get_saved_gloss(word)
         if full_analysis.preferred_definition == "???":
             if self.debug:
@@ -284,8 +284,8 @@ class Dictionary:
 
         orig_word = word
         word = word.lower()
-        word = nlp.maybe_strip_plural_acc_ending(word)
-        word = nlp.replace_verb_ending(word)
+        word = eostem.maybe_strip_plural_acc_ending(word)
+        word = eostem.replace_verb_ending(word)
         analysis = self._get_saved_gloss(word)
         if analysis.preferred_definition == "???":
             if self.debug:

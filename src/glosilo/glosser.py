@@ -10,7 +10,6 @@ import unicodedata
 from absl import app  # type: ignore
 
 from glosilo import consts
-from glosilo import nlp
 from glosilo import structs
 from glosilo.dictionary import Dictionary
 
@@ -148,10 +147,11 @@ def get_dictionary_gloss(dictionary: Dictionary, word: str) -> structs.CoredWord
 
 def adjust_gloss(glosser: Glosser, g: structs.CoredWord) -> structs.CoredWord:
     """Adjusts the gloss for things we want the reader to figure out."""
+    from glosilo import eostem
 
     word = g.orig_word
-    word = nlp.maybe_strip_plural_acc_ending(word)
-    word = nlp.replace_verb_ending(word)
+    word = eostem.maybe_strip_plural_acc_ending(word)
+    word = eostem.replace_verb_ending(word)
     if word in glosser.difficult:
         g.preferred_definition = glosser.difficult[word]
         return g
