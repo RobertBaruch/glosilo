@@ -53,47 +53,36 @@ def verify_stem(cored: CoredWord, dictionary: dict[str, str]) -> tuple[bool, str
 
 
 def format_cored_word(cored: CoredWord, verify: bool = False, dictionary: dict[str, str] | None = None) -> str:
-    """Format a CoredWord for display."""
-    parts: list[str] = []
+    """Format a CoredWord for display as a one-line output.
 
+    Format: word = prefix+core+suffix+ending [lookup: word | FOUND/NOT FOUND]
+
+    Examples:
+        parolanto = parol+ant+i
+        nekompreneble = ne+kompren+ebl+i [lookup: kompreni | FOUND]
+        maltrankviliga = mal+trankvil+ig+i [lookup: trankvili | NOT FOUND]
+    """
     # Build the word breakdown
-    prefixes_str = "+".join(cored.prefixes) if cored.prefixes else ""
-    suffixes_str = "+".join(cored.suffixes) if cored.suffixes else ""
-
     word_parts: list[str] = []
-    if prefixes_str:
-        word_parts.append(prefixes_str)
+    if cored.prefixes:
+        word_parts.append("+".join(cored.prefixes))
     if cored.core:
         word_parts.append(cored.core)
-    if suffixes_str:
-        word_parts.append(suffixes_str)
+    if cored.suffixes:
+        word_parts.append("+".join(cored.suffixes))
     if cored.preferred_ending:
         word_parts.append(cored.preferred_ending)
 
     breakdown = "+".join(word_parts)
-
-    # Format output
-    parts.append(f"Word: {cored.orig_word}")
-    parts.append(f"Breakdown: {breakdown}")
-    parts.append(f"Core: {cored.core}")
-
-    if cored.prefixes:
-        parts.append(f"Prefixes: {', '.join(cored.prefixes)}")
-    if cored.suffixes:
-        parts.append(f"Suffixes: {', '.join(cored.suffixes)}")
-    if cored.preferred_ending:
-        parts.append(f"Ending: {cored.preferred_ending}")
+    result = f"{cored.orig_word} = {breakdown}"
 
     # Add verification result if requested
     if verify and dictionary is not None:
         found, lookup_word = verify_stem(cored, dictionary)
-        parts.append(f"Lookup: {lookup_word}")
-        if found:
-            parts.append(f"Dictionary: FOUND")
-        else:
-            parts.append(f"Dictionary: NOT FOUND")
+        status = "FOUND" if found else "NOT FOUND"
+        result += f" [lookup: {lookup_word} | {status}]"
 
-    return "\n".join(parts)
+    return result
 
 
 def main() -> None:
