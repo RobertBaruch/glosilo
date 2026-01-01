@@ -88,20 +88,21 @@ def format_cored_word(cored: CoredWord, verify: bool = False, dictionary: dict[s
 def main() -> None:
     """Main entry point for the stem command."""
     if len(sys.argv) < 2:
-        print("Usage: python -m glosilo.stem [--debug] [--verify] <word>", file=sys.stderr)
+        print("Usage: python -m glosilo.stem [--debug] [--verify] <word> [<word> ...]", file=sys.stderr)
         print("\nOptions:", file=sys.stderr)
         print("  --debug   Show detailed stemming process", file=sys.stderr)
         print("  --verify  Verify stem exists in dictionary", file=sys.stderr)
         print("\nExamples:", file=sys.stderr)
         print("  python -m glosilo.stem parolanto", file=sys.stderr)
+        print("  python -m glosilo.stem parolanto nekompreneble ekdiri", file=sys.stderr)
         print("  python -m glosilo.stem --debug nekompreneble", file=sys.stderr)
-        print("  python -m glosilo.stem --verify maltrankviliga", file=sys.stderr)
+        print("  python -m glosilo.stem --verify maltrankviliga kato lernejo", file=sys.stderr)
         print("  python -m glosilo.stem --debug --verify ekdiri", file=sys.stderr)
         sys.exit(1)
 
     debug: bool = False
     verify: bool = False
-    word: str | None = None
+    words: list[str] = []
 
     # Parse arguments
     for arg in sys.argv[1:]:
@@ -109,13 +110,10 @@ def main() -> None:
             debug = True
         elif arg == "--verify":
             verify = True
-        elif not word:
-            word = arg
         else:
-            print(f"Error: Unexpected argument '{arg}'", file=sys.stderr)
-            sys.exit(1)
+            words.append(arg)
 
-    if not word:
+    if not words:
         print("Error: No word provided", file=sys.stderr)
         sys.exit(1)
 
@@ -128,16 +126,17 @@ def main() -> None:
             print("Continuing without verification...\n", file=sys.stderr)
             verify = False
 
-    # Stem the word
-    cored = eostem.core_word(word, debug=debug)
+    # Stem each word
+    for word in words:
+        cored = eostem.core_word(word, debug=debug)
 
-    # Print results
-    if not debug:
-        print(format_cored_word(cored, verify=verify, dictionary=dictionary))
-    else:
-        # Debug mode already prints detailed info during processing
-        print("\n" + "=" * 50)
-        print(format_cored_word(cored, verify=verify, dictionary=dictionary))
+        # Print results
+        if not debug:
+            print(format_cored_word(cored, verify=verify, dictionary=dictionary))
+        else:
+            # Debug mode already prints detailed info during processing
+            print("\n" + "=" * 50)
+            print(format_cored_word(cored, verify=verify, dictionary=dictionary))
 
 
 if __name__ == "__main__":
