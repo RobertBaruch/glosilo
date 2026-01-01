@@ -8,6 +8,7 @@ Usage:
 
 import json
 import sys
+import io
 from pathlib import Path
 from glosilo import eostem
 from glosilo.structs import CoredWord
@@ -38,6 +39,8 @@ def verify_stem(cored: CoredWord, dictionary: dict[str, str]) -> tuple[bool, str
     The stem is formed by combining the core with the ending.
     For example, "nekompreneble" -> core="kompren" + ending="i" -> "kompreni"
 
+    Checks both lowercase and capitalized versions of the lookup word.
+
     Args:
         cored: The cored word to verify
         dictionary: Dictionary mapping words to file paths
@@ -48,7 +51,15 @@ def verify_stem(cored: CoredWord, dictionary: dict[str, str]) -> tuple[bool, str
     """
     # Form the lookup word: core + ending
     lookup_word = cored.core + cored.preferred_ending if cored.preferred_ending else cored.core
+
+    # Check lowercase version
     found = lookup_word in dictionary
+
+    # Also check capitalized version if lowercase not found
+    if not found:
+        capitalized = lookup_word.capitalize()
+        found = capitalized in dictionary
+
     return found, lookup_word
 
 
@@ -87,6 +98,10 @@ def format_cored_word(cored: CoredWord, verify: bool = False, dictionary: dict[s
 
 def main() -> None:
     """Main entry point for the stem command."""
+    # Ensure UTF-8 encoding for output on Windows
+    if sys.stdout.encoding != 'utf-8':
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+
     if len(sys.argv) < 2:
         print("Usage: python -m glosilo.stem [--debug] [--verify] <word> [<word> ...]", file=sys.stderr)
         print("\nOptions:", file=sys.stderr)
