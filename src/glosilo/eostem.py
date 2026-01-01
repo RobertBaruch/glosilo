@@ -4,11 +4,33 @@ This module contains functions for stemming Esperanto words by stripping
 prefixes, suffixes, and endings to find the core/root of a word.
 """
 
+import json
+from pathlib import Path
 from glosilo import consts
 from glosilo import structs
 
 
 DEBUGWORD = ""
+RAD_DICTIONARY_PATH = Path("F:/retavortaropy/rad_dictionary.json")
+_rad_dictionary_cache: dict[str, str] | None = None
+
+
+def _get_rad_dictionary() -> dict[str, str]:
+    """Get the rad dictionary, loading it once and caching it."""
+    global _rad_dictionary_cache
+    if _rad_dictionary_cache is None:
+        if RAD_DICTIONARY_PATH.exists():
+            try:
+                with open(RAD_DICTIONARY_PATH, "r", encoding="utf-8") as f:
+                    _rad_dictionary_cache = json.load(f)
+            except (json.JSONDecodeError, IOError):
+                # If loading fails, use empty dict
+                _rad_dictionary_cache = {}
+        else:
+            _rad_dictionary_cache = {}
+    # _rad_dictionary_cache is guaranteed to be dict[str, str] here, not None
+    assert _rad_dictionary_cache is not None
+    return _rad_dictionary_cache
 
 
 def maybe_strip_plural_acc_ending(word: str) -> str:
@@ -62,7 +84,9 @@ def _strip_affixes(word: str) -> tuple[str, list[str], list[str]]:
     """Strips all prefixes and suffixes from a word."""
     prefixes: list[str] = []
     suffixes: list[str] = []
+    preposition_prefixes: list[str] = []
 
+    # First strip standard prefixes (mal, ne, ek, dis)
     while any((word.startswith(prefix) for prefix in consts.PREFIXES)):
         for prefix in consts.PREFIXES:
             if word.startswith(prefix):
@@ -70,6 +94,21 @@ def _strip_affixes(word: str) -> tuple[str, list[str], list[str]]:
                 word = word[len(prefix) :]
                 break
 
+    # Try stripping prepositions as prefixes
+    # Only strip if the remainder is a valid root in rad_dictionary or CORE_IMMUNE_CORES
+    # This prevents "forto" → "for+to" (incorrect, "to" is not a root)
+    # but allows "alprem" → "al+prem" (correct, "prem" is a root)
+    rad_dict = _get_rad_dictionary()
+    for preposition in sorted(consts.PREPOSITIONS, key=len, reverse=True):
+        if word.startswith(preposition):
+            remainder = word[len(preposition):]
+            # Only strip preposition if remainder is a valid root
+            if remainder in consts.CORE_IMMUNE_CORES or remainder in rad_dict:
+                preposition_prefixes.append(preposition)
+                word = remainder
+                break
+
+    # Strip suffixes
     while any((word.endswith(suffix) for suffix in consts.SUFFIXES)):
         for suffix in consts.SUFFIXES:
             if word.endswith(suffix):
@@ -77,22 +116,25 @@ def _strip_affixes(word: str) -> tuple[str, list[str], list[str]]:
                 word = word[: -len(suffix)]
                 break
 
+    # Combine all prefixes (standard prefixes first, then prepositions)
+    all_prefixes = prefixes + preposition_prefixes
+
     # Check all combinations of prefixes and suffixes for core-immune words or vortetoj.
     # If we hit a core-immune word, then use only those prefixes and suffixes.
     for num_suffixes in range(len(suffixes), -1, -1):
-        for num_prefixes in range(len(prefixes), -1, -1):
+        for num_prefixes in range(len(all_prefixes), -1, -1):
             core = word
             if num_prefixes:
-                core = "".join(prefixes[-num_prefixes:]) + core
+                core = "".join(all_prefixes[-num_prefixes:]) + core
             if num_suffixes:
                 core = core + "".join(suffixes[:num_suffixes])
             if core in consts.CORE_IMMUNE_CORES or core in consts.VORTETOJ:
                 if num_prefixes:
-                    prefixes = prefixes[:-num_prefixes]
+                    all_prefixes = all_prefixes[:-num_prefixes]
                 suffixes = suffixes[num_suffixes:]
-                return core, prefixes, suffixes
+                return core, all_prefixes, suffixes
 
-    return word, prefixes, suffixes
+    return word, all_prefixes, suffixes
 
 def replace_verb_ending(word: str) -> str:
     """Replace the verb ending from a word."""
