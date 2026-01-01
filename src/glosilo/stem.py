@@ -36,8 +36,9 @@ def load_dictionary() -> dict[str, str] | None:
 def verify_stem(cored: CoredWord, dictionary: dict[str, str]) -> tuple[bool, str]:
     """Verify that the stem exists in the dictionary.
 
-    The stem is formed by combining the core with the ending.
-    For example, "nekompreneble" -> core="kompren" + ending="i" -> "kompreni"
+    The stem is formed by combining the core with the ending, and optionally
+    with suffixes if needed. First tries core+ending (e.g., "paroli"), then
+    tries core+suffixes+ending (e.g., "subigi") if the first lookup fails.
 
     Checks both lowercase and capitalized versions of the lookup word.
 
@@ -49,16 +50,31 @@ def verify_stem(cored: CoredWord, dictionary: dict[str, str]) -> tuple[bool, str
         Tuple of (found, lookup_word) where found is True if the word exists
         in the dictionary, and lookup_word is the word that was looked up.
     """
-    # Form the lookup word: core + ending
+    # First try: core + ending (without suffixes)
+    # This handles most normal words like "paroli", "kompreni"
     lookup_word = cored.core + cored.preferred_ending if cored.preferred_ending else cored.core
-
-    # Check lowercase version
     found = lookup_word in dictionary
 
-    # Also check capitalized version if lowercase not found
     if not found:
         capitalized = lookup_word.capitalize()
         found = capitalized in dictionary
+
+    # Second try: core + suffixes + ending
+    # This handles words where the core is a preposition used as a root,
+    # like "subigi" (sub+ig+i) or "forigi" (for+ig+i)
+    if not found and cored.suffixes:
+        lookup_word_with_suffixes = cored.core + "".join(cored.suffixes)
+        if cored.preferred_ending:
+            lookup_word_with_suffixes += cored.preferred_ending
+
+        found = lookup_word_with_suffixes in dictionary
+        if not found:
+            capitalized = lookup_word_with_suffixes.capitalize()
+            found = capitalized in dictionary
+
+        # If found with suffixes, use that as the lookup word
+        if found:
+            lookup_word = lookup_word_with_suffixes
 
     return found, lookup_word
 

@@ -98,14 +98,28 @@ def _strip_affixes(word: str) -> tuple[str, list[str], list[str]]:
     # Only strip if the remainder is a valid root in rad_dictionary or CORE_IMMUNE_CORES
     # This prevents "forto" → "for+to" (incorrect, "to" is not a root)
     # but allows "alprem" → "al+prem" (correct, "prem" is a root)
+    # Also allows "ensumigi" → "en+sum+ig+i" by checking if remainder after
+    # stripping suffixes would be valid
     rad_dict = _get_rad_dictionary()
     for preposition in sorted(consts.PREPOSITIONS, key=len, reverse=True):
         if word.startswith(preposition):
             remainder = word[len(preposition):]
-            # Only strip preposition if remainder is a valid root
+            # Check if remainder is valid as-is
             if remainder in consts.CORE_IMMUNE_CORES or remainder in rad_dict:
                 preposition_prefixes.append(preposition)
                 word = remainder
+                break
+            # Also check if remainder would be valid after stripping suffixes
+            # This handles cases like "ensumig" → "en" + "sumig" where "sum" is valid
+            test_remainder = remainder
+            for suffix in consts.SUFFIXES:
+                if test_remainder.endswith(suffix):
+                    potential_root = test_remainder[:-len(suffix)]
+                    if potential_root and (potential_root in consts.CORE_IMMUNE_CORES or potential_root in rad_dict):
+                        preposition_prefixes.append(preposition)
+                        word = remainder
+                        break
+            if preposition_prefixes:
                 break
 
     # Strip suffixes
