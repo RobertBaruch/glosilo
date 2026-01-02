@@ -50,8 +50,8 @@ def _strip_prefixes(
     """Strips a prefix from a word."""
     prefixes: list[str] = curr_prefixes or []
 
-    # Probably not the best.
-    if word.startswith(tuple(consts.CORE_IMMUNE_CORES)): # | consts.VORTETOJ)):
+    # Check if word is a core-immune word or vortetoj that shouldn't be split
+    if word.startswith(tuple(consts.CORE_IMMUNE_CORES | consts.VORTETOJ)):
         return word, prefixes
 
     for prefix in consts.PREFIXES:
@@ -89,9 +89,10 @@ def _strip_affixes(word: str) -> tuple[str, list[str], list[str]]:
     # Load rad_dictionary for validation
     rad_dict = _get_rad_dictionary()
 
-    # Find longest root match in rad_dictionary by trying combinations
-    # of prefix/suffix stripping. E.g. for "ekvilibrigit", we find
+    # Find longest root match in rad_dictionary or CORE_IMMUNE_CORES by trying
+    # combinations of prefix/suffix stripping. E.g. for "ekvilibrigit", we find
     # "ekvilibr" (no prefixes, suffixes=["ig","it"]) is longest match.
+    # CORE_IMMUNE_CORES handles compound words like "studjar" that aren't in rad_dict.
     #
     # Scoring: prefer cores that are NOT prefixes. If core is a prefix,
     # score is reduced. This ensures "neigi" → "ne+ig+i" not "ne+igi".
@@ -132,9 +133,8 @@ def _strip_affixes(word: str) -> tuple[str, list[str], list[str]]:
                 if not found:
                     break
 
-            # Check if test_word is valid root
-            if test_word and (test_word in rad_dict or
-                            test_word in consts.CORE_IMMUNE_CORES):
+            # Check if test_word is valid root in rad_dict or CORE_IMMUNE_CORES
+            if test_word and (test_word in rad_dict or test_word in consts.CORE_IMMUNE_CORES):
                 # Score: length of root, but penalize if core is a known prefix
                 # This makes "ne+ig" preferred over "ne+igi" for "neigi"
                 score = len(test_word) * 10
