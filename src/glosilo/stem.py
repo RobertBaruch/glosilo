@@ -70,9 +70,12 @@ def verify_stem(cored: CoredWord, dictionary: dict[str, str], rad_dictionary: di
         Tuple of (found, lookup_word) where found is True if the word exists
         in the dictionary, and lookup_word is the word that was looked up.
     """
+    from glosilo.eostem import core_to_str
+
     # First try: core + ending (without suffixes)
     # This handles most normal words like "paroli", "kompreni"
-    lookup_word = cored.core + cored.preferred_ending if cored.preferred_ending else cored.core
+    core_str = core_to_str(cored.core)
+    lookup_word = core_str + cored.preferred_ending if cored.preferred_ending else core_str
     found = lookup_word in dictionary
 
     if not found:
@@ -83,7 +86,7 @@ def verify_stem(cored: CoredWord, dictionary: dict[str, str], rad_dictionary: di
     # This handles words where the core is a preposition used as a root,
     # like "subigi" (sub+ig+i) or "forigi" (for+ig+i)
     if not found and cored.suffixes:
-        lookup_word_with_suffixes = cored.core + "".join(cored.suffixes)
+        lookup_word_with_suffixes = core_to_str(cored.core) + "".join(cored.suffixes)
         if cored.preferred_ending:
             lookup_word_with_suffixes += cored.preferred_ending
 
@@ -99,7 +102,11 @@ def verify_stem(cored: CoredWord, dictionary: dict[str, str], rad_dictionary: di
     # Third try: check if the core itself is in rad_dictionary
     # This handles cases where the root exists even if the full word doesn't
     if not found and rad_dictionary is not None:
-        if cored.core in rad_dictionary:
+        # Check if single root in rad_dictionary, or if compound with all parts valid
+        if len(cored.core) == 1 and cored.core[0] in rad_dictionary:
+            found = True
+            # Keep the original lookup_word for display
+        elif len(cored.core) > 1 and all(part in rad_dictionary for part in cored.core if len(part) > 1):
             found = True
             # Keep the original lookup_word for display
 
@@ -117,11 +124,13 @@ def format_cored_word(cored: CoredWord, verify: bool = False, dictionary: dict[s
         maltrankviliga = mal+trankvil+ig+i [lookup: trankvili | NOT FOUND]
     """
     # Build the word breakdown
+    from glosilo.eostem import core_display
+
     word_parts: list[str] = []
     if cored.prefixes:
         word_parts.append("+".join(cored.prefixes))
     if cored.core:
-        word_parts.append(cored.core)
+        word_parts.append(core_display(cored.core))
     if cored.suffixes:
         word_parts.append("+".join(cored.suffixes))
     if cored.preferred_ending:

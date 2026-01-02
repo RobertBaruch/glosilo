@@ -135,13 +135,15 @@ def merge_punctuation(glosses: list[structs.CoredWord]) -> list[structs.CoredWor
 
 def get_dictionary_gloss(dictionary: Dictionary, word: str) -> structs.CoredWord:
     """Gets the gloss from the dictionary."""
+    from glosilo.eostem import core_to_str
+
     analysis = dictionary.get_gloss(word)
     if (
-        analysis.core + analysis.preferred_ending in consts.COMMON_WORDS
+        core_to_str(analysis.core) + analysis.preferred_ending in consts.COMMON_WORDS
         and not analysis.prefixes
         and not analysis.suffixes
     ):
-        return structs.CoredWord(word, [], "", [], "", [], "", "")
+        return structs.CoredWord(word, [], [""], [], "", [], "", "")
     return copy.copy(analysis)
 
 

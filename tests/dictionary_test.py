@@ -81,7 +81,7 @@ def test_get_gloss_paroli(word: str) -> None:
     assert gloss.orig_word == word, _print_mismatch(
         "orig_word", word, word, gloss.orig_word
     )
-    assert gloss.core == "parol", _print_mismatch("core", word, "parol", gloss.core)
+    assert gloss.core == ["parol"], _print_mismatch("core", word, ["parol"], gloss.core)
     assert gloss.prefixes == [], _print_mismatch("prefixes", word, [], gloss.prefixes)
     assert gloss.suffixes == [], _print_mismatch("suffixes", word, [], gloss.suffixes)
     assert gloss.preferred_definition == "to-speak", _print_mismatch(
@@ -107,7 +107,7 @@ def test_get_gloss_paroli_with_suffixes(
     assert gloss.orig_word == word, _print_mismatch(
         "orig_word", word, word, gloss.orig_word
     )
-    assert gloss.core == "parol", _print_mismatch("core", word, "parol", gloss.core)
+    assert gloss.core == ["parol"], _print_mismatch("core", word, ["parol"], gloss.core)
     assert gloss.prefixes == [], _print_mismatch("prefixes", word, [], gloss.prefixes)
     assert gloss.suffixes == suffixes, _print_mismatch(
         "suffixes", word, suffixes, gloss.suffixes
@@ -126,27 +126,27 @@ def test_get_gloss_paroli_with_suffixes(
 @pytest.mark.parametrize(
     ["word", "prefixes", "core", "suffixes", "ending", "definition", "core_definition"],
     [
-        ("ĉiel", [], "ĉiel", [], "", "every-manner", "every-manner"),
-        ("ĉielo", [], "ĉiel", [], "o", "heaven", "heaven"),
-        ("mi", [], "mi", [], "", "I", "I"),
-        ("mia", [], "mi", [], "a", "mine", "I"),
-        ("venonta", [], "ven", ["ont"], "i", "coming", "to-come"),
-        ("ĉioma", [], "ĉiom", [], "a", "???", "all"),
-        ("lernejo", [], "lern", ["ej"], "o", "school", "to-learn"),
-        ("studjaro", [], "studjar", [], "o", "academic-year", "academic-year"),
-        ("neebla", ["ne"], "ebl", [], "i", "", "to-be-possible"),
-        ("iomete", [], "iom", ["et"], "e", "a-little", "some"),
-        ("bruligis", [], "brul", ["ig"], "i", "to-burn", "to-burn"),
-        ("bonhumore", [], "bonhumor", [], "e", "cheerfully", "cheerfully"),
-        ("malbonhumore", ["mal"], "bonhumor", [], "e", "", "cheerfully"),
-        ("supozeble", [], "supoz", ["ebl"], "i", "presumably", "to-suppose"),
-        ("malantaŭ", ["mal"], "antaŭ", [], "", "", "before"),
+        ("ĉiel", [], ["ĉiel"], [], "", "every-manner", "every-manner"),
+        ("ĉielo", [], ["ĉiel"], [], "o", "heaven", "heaven"),
+        ("mi", [], ["mi"], [], "", "I", "I"),
+        ("mia", [], ["mi"], [], "a", "mine", "I"),
+        ("venonta", [], ["ven"], ["ont"], "i", "coming", "to-come"),
+        ("ĉioma", [], ["ĉiom"], [], "a", "???", "all"),
+        ("lernejo", [], ["lern"], ["ej"], "o", "school", "to-learn"),
+        ("studjaro", [], ["stud", "jar"], [], "o", "academic-year", "academic-year"),
+        ("neebla", ["ne"], ["ebl"], [], "i", "", "to-be-possible"),
+        ("iomete", [], ["iom"], ["et"], "e", "a-little", "some"),
+        ("bruligis", [], ["brul"], ["ig"], "i", "to-burn", "to-burn"),
+        ("bonhumore", [], ["bon", "humor"], [], "e", "cheerfully", "cheerfully"),
+        ("malbonhumore", ["mal"], ["bon", "humor"], [], "e", "", "cheerfully"),
+        ("supozeble", [], ["supoz"], ["ebl"], "i", "presumably", "to-suppose"),
+        ("malantaŭ", ["mal"], ["antaŭ"], [], "", "", "before"),
     ],
 )
 def test_get_gloss_fakeouts(
     word: str,
     prefixes: list[str],
-    core: str,
+    core: list[str],
     suffixes: list[str],
     ending: str,
     definition: str,

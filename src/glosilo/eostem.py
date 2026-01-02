@@ -67,13 +67,140 @@ def lookup_kap(word_without_ending: str) -> bool:
                for ending in ["a", "e", "i", "o"])
 
 
-def _strip_affixes2(word_without_ending: str) -> tuple[str, list[str], list[str]]:
+def core_to_str(core: str | list[str]) -> str:
+    """Convert core to string for dictionary lookup (joins with no separator).
+
+    Args:
+        core: Either a string (legacy) or list of strings (compound)
+
+    Returns:
+        String with parts joined by empty string (for dictionary lookup)
+    """
+    if isinstance(core, list):
+        return "".join(core)
+    return core
+
+
+def core_display(core: str | list[str]) -> str:
+    """Convert core to display representation with | separator.
+
+    Args:
+        core: Either a string or list of strings
+
+    Returns:
+        String with parts joined by | for compound words
+    """
+    if isinstance(core, list):
+        return "|".join(core)
+    return core
+
+
+def make_core(parts: str | list[str]) -> list[str]:
+    """Normalize core to list[str] format.
+
+    Args:
+        parts: Either a single string or list of strings
+
+    Returns:
+        List of core parts (single element for non-compounds)
+    """
+    if isinstance(parts, list):
+        return parts
+    return [parts]
+
+
+def _try_split_compound(word: str, rad_dict: dict[str, str]) -> list[str] | None:
+    """Try to split a word into compound parts.
+
+    Algorithm:
+    1. Try all possible split points
+    2. For each split, check if both parts exist in rad_dictionary
+    3. Handle optional linking vowels (a, e, i, o) between parts
+    4. Support recursive splitting for 3+ part compounds
+    5. Prefer longest valid roots
+
+    Args:
+        word: The word to attempt to split
+        rad_dict: Root dictionary for validation
+
+    Returns:
+        List of core parts if valid compound found, None otherwise
+
+    Examples:
+        bluokul -> ['blu', 'okul'] (no linking vowel, okul starts with o)
+        vaporŝip -> ['vapor', 'ŝip'] (no linking vowel)
+        multehom -> ['mult', 'e', 'hom'] (linking e)
+        dikfingr -> ['dik', 'fingr'] (no linking vowel)
+    """
+    # Don't split words shorter than 4 characters
+    if len(word) < 4:
+        return None
+
+    # Get all affixes to exclude them from compound parts
+    # A compound must consist of ROOTS, not affixes
+    all_affixes = set(consts.PREFIXES) | set(consts.SUFFIXES) | set(consts.PREPOSITIONS)
+
+    best_split = None
+    best_score = 0  # Score based on root lengths
+
+    # Try all split points from position 2 to len-2
+    for i in range(2, len(word) - 1):
+        left_part = word[:i]
+        right_part = word[i:]
+
+        # Try without linking vowel
+        # Both parts must be in rad_dict AND not be affixes
+        if (left_part in rad_dict and right_part in rad_dict and
+            left_part not in all_affixes and right_part not in all_affixes):
+            score = len(left_part) + len(right_part)
+            if score > best_score:
+                best_score = score
+                best_split = [left_part, right_part]
+
+        # Try with linking vowel (check if left ends with a/e/i/o)
+        if left_part and left_part[-1] in 'aeio':
+            left_root = left_part[:-1]
+            linking_vowel = left_part[-1]
+            # Both parts must be in rad_dict AND not be affixes
+            if (left_root in rad_dict and right_part in rad_dict and
+                left_root not in all_affixes and right_part not in all_affixes):
+                score = len(left_root) + len(right_part)
+                if score > best_score:
+                    best_score = score
+                    best_split = [left_root, linking_vowel, right_part]
+
+    # If we found a 2-part split, try recursive splitting on the right part
+    # Only use the recursive split if it provides more total root length
+    if best_split and len(best_split) == 2:
+        right_part_original_len = len(best_split[1])
+        right_subsplit = _try_split_compound(best_split[1], rad_dict)
+        if right_subsplit:
+            # Only use recursive split if total root length is greater
+            right_subsplit_len = sum(len(p) for p in right_subsplit if len(p) > 1)
+            if right_subsplit_len > right_part_original_len:
+                best_split = [best_split[0]] + right_subsplit
+    elif best_split and len(best_split) == 3:
+        # Has linking vowel - try recursive split on right part
+        right_part_original_len = len(best_split[2])
+        right_subsplit = _try_split_compound(best_split[2], rad_dict)
+        if right_subsplit:
+            # Only use recursive split if total root length is greater
+            right_subsplit_len = sum(len(p) for p in right_subsplit if len(p) > 1)
+            if right_subsplit_len > right_part_original_len:
+                best_split = [best_split[0], best_split[1]] + right_subsplit
+
+    return best_split
+
+
+def _strip_affixes2(word_without_ending: str) -> tuple[list[str], list[str], list[str]]:
     """Alternative algorithm for stripping affixes using iterative reconstruction.
 
     This algorithm:
+    0.5. Try compound word splitting on the original word FIRST
     1. Strips one preposition from the beginning (if possible)
     2. Strips all prefixes from the remainder
     3. Strips all suffixes from what's left
+    3.5. Try compound word splitting on the remainder
     4. Iterates through all combinations of "unstripping" prefixes and suffixes
     5. For each combination, reconstructs the root and checks if it exists in rad_dict
     6. Returns the configuration with the longest validated root
@@ -82,7 +209,9 @@ def _strip_affixes2(word_without_ending: str) -> tuple[str, list[str], list[str]
         word_without_ending: The word with its ending already removed
 
     Returns:
-        Tuple of (core, prefixes, suffixes) where prefixes may include a preposition
+        Tuple of (core, prefixes, suffixes) where:
+        - core is a list[str] (single element for simple words, multiple for compounds)
+        - prefixes may include a preposition
     """
     rad_dict = _get_rad_dictionary()
 
@@ -127,7 +256,8 @@ def _strip_affixes2(word_without_ending: str) -> tuple[str, list[str], list[str]
     # temp_suffixes contains all stripped suffixes
 
     # Step 4 & 5: Iterate through all combinations, reconstruct roots, and validate
-    deconstructions: list[tuple[list[str], str, list[str], int, int]] = []
+    # We'll also consider compound splits as one of the possibilities
+    deconstructions: list[tuple[list[str], list[str], list[str], int, int]] = []
 
     # Try all combinations of how many prefixes/suffixes to "unstri" (add back to core)
     for num_prefixes_to_keep_in_core in range(len(temp_prefixes) + 1):
@@ -135,7 +265,7 @@ def _strip_affixes2(word_without_ending: str) -> tuple[str, list[str], list[str]
             # Reconstruct the root
             # Prefixes that go back into core: last num_prefixes_to_keep_in_core
             # Suffixes that go back into core: first num_suffixes_to_keep_in_core
-            reconstructed_root_parts = []
+            reconstructed_root_parts: list[str] = []
 
             if num_prefixes_to_keep_in_core > 0:
                 reconstructed_root_parts.extend(temp_prefixes[-num_prefixes_to_keep_in_core:])
@@ -148,7 +278,7 @@ def _strip_affixes2(word_without_ending: str) -> tuple[str, list[str], list[str]
             reconstructed_root = "".join(reconstructed_root_parts)
 
             # Check if this root is valid
-            if reconstructed_root in rad_dict or reconstructed_root in consts.CORE_IMMUNE_CORES:
+            if reconstructed_root in rad_dict:
                 # This is a valid configuration
                 # Prefixes that were stripped: first (len - num_to_keep) prefixes
                 stripped_prefixes = temp_prefixes[:len(temp_prefixes) - num_prefixes_to_keep_in_core]
@@ -179,22 +309,54 @@ def _strip_affixes2(word_without_ending: str) -> tuple[str, list[str], list[str]
 
                 deconstructions.append((
                     stripped_prefixes,
-                    reconstructed_root,
+                    make_core(reconstructed_root),  # Convert to list[str] format
                     stripped_suffixes,
                     len(reconstructed_root),
                     score_penalty
                 ))
+
+    # Step 5.5: Also try compound word splitting on various reconstructed forms
+    # Try compound on the remainder (after max stripping)
+    compound_parts = _try_split_compound(remainder, rad_dict)
+    if compound_parts:
+        all_prefixes = ([preposition] if preposition else []) + temp_prefixes
+        # Calculate score for compound: sum of root lengths (excluding linking vowels)
+        compound_score = sum(len(p) for p in compound_parts if len(p) > 1)
+        # Small penalty for compounds to prefer simpler affixed forms when scores are close
+        # (prefer "parol+ant" over "par+o+lant" when both are valid)
+        compound_penalty = 10
+        deconstructions.append((
+            all_prefixes,
+            compound_parts,
+            temp_suffixes,
+            compound_score,
+            compound_penalty
+        ))
+
+    # Also try compound on the original word (before any stripping)
+    compound_parts_original = _try_split_compound(word_without_ending, rad_dict)
+    if compound_parts_original:
+        compound_score_original = sum(len(p) for p in compound_parts_original if len(p) > 1)
+        # Smaller penalty for compounds without affixes (these are more likely to be true compounds)
+        compound_penalty_original = 5
+        deconstructions.append((
+            [],
+            compound_parts_original,
+            [],
+            compound_score_original,
+            compound_penalty_original
+        ))
 
     # Step 6: Choose the element with the longest reconstructed root
     if deconstructions:
         # Sort by penalty (ascending), then root length (descending), then affixes stripped (descending)
         deconstructions.sort(key=lambda x: (-x[4], x[3], len(x[0]) + len(x[2])), reverse=True)
         best = deconstructions[0]
-        return best[1], best[0], best[2]  # core, prefixes, suffixes
+        return best[1], best[0], best[2]  # core (already list[str]), prefixes, suffixes
 
     # Fallback: return with maximum stripping
     all_prefixes = ([preposition] if preposition else []) + temp_prefixes
-    return remainder, all_prefixes, temp_suffixes
+    return make_core(remainder), all_prefixes, temp_suffixes
 
 
 def maybe_strip_plural_acc_ending(word: str) -> str:
@@ -416,12 +578,10 @@ def core_word(word: str, debug: bool = False) -> structs.CoredWord:
     # word, prefixes = _strip_prefixes(word)
     # word, suffixes = _strip_suffixes(word)
 
-    word, prefixes, suffixes = _strip_affixes(word)
-
-    core = word
+    core, prefixes, suffixes = _strip_affixes2(word)
 
     if orig_word == DEBUGWORD:
-        print(f"  Stripped: {prefixes}+{word}+{suffixes}+{orig_ending}")
+        print(f"  Stripped: {prefixes}+{core_display(core)}+{suffixes}+{orig_ending}")
     # If the last suffix is one that converts a verb to another type of word, then
     # change the ending to "i".
     if suffixes and suffixes[-1] in consts.VERB_SUFFIXES:
@@ -430,20 +590,21 @@ def core_word(word: str, debug: bool = False) -> structs.CoredWord:
         orig_ending = "i"
     # Also change ending to "i" if the core itself is a verb suffix
     # (e.g., "neebla" → "ne+ebl+i" where "ebl" is the core)
-    if core in consts.VERB_SUFFIXES:
+    if len(core) == 1 and core[0] in consts.VERB_SUFFIXES:
         if orig_word == DEBUGWORD:
-            print(f"  Core is verb suffix: {core}; orig_ending changed to 'i'")
+            print(f"  Core is verb suffix: {core[0]}; orig_ending changed to 'i'")
         orig_ending = "i"
 
     # If there's no core, try to get one from the prefixes or suffixes.
-    if not core and suffixes:
-        core = suffixes.pop(0)
-        if orig_word == DEBUGWORD:
-            print(f"  No core, trying to use suffix {core}")
-    if not core and prefixes:
-        core = prefixes.pop()
-        if orig_word == DEBUGWORD:
-            print(f"  No core, trying to use prefix {core}")
+    if not core or (len(core) == 1 and not core[0]):
+        if suffixes:
+            core = [suffixes.pop(0)]
+            if orig_word == DEBUGWORD:
+                print(f"  No core, trying to use suffix {core[0]}")
+        elif prefixes:
+            core = [prefixes.pop()]
+            if orig_word == DEBUGWORD:
+                print(f"  No core, trying to use prefix {core[0]}")
 
     analysis = structs.CoredWord(
         orig_word, prefixes, core, suffixes, orig_ending, [], "", ""

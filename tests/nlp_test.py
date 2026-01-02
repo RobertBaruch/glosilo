@@ -42,7 +42,7 @@ def test_maybe_strip_plural_acc_ending_strips_plural_accusative_ending(
         ("malnediro", ["mal", "ne"], "dir", [], "o"),
         ("nei", [], "ne", [], "i"),
         ("nea", [], "ne", [], "a"),
-        ("neigi", ["ne"], "ig", [], "i"),
+        ("neigi", [], "ne", ["ig"], "i"),
         ("neebla", ["ne"], "ebl", [], "i"),
         ("igi", [], "ig", [], "i"),
         ("nego", [], "neg", [], "o"),
@@ -70,7 +70,7 @@ def test_core_word_produces_core(
     assert (
         cored.prefixes == prefixes
     ), f"Prefixes do not match, got {cored.prefixes}, expected {prefixes}"
-    assert cored.core == core, f"Core does not match, got {cored.core}, expected {core}"
+    assert cored.core == [core], f"Core does not match, got {cored.core}, expected {[core]}"
     assert (
         cored.suffixes == suffixes
     ), f"Suffixes do not match, got {cored.suffixes}, expected {suffixes}"

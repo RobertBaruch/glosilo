@@ -31,8 +31,10 @@ class CoredWord:
     orig_word: str
     prefixes: list[str]
     # The core of a word is the part that is left after all prefixes and suffixes
-    # and endings have been removed.
-    core: str
+    # and endings have been removed. For compound words, this is a list of roots
+    # (e.g., ['blu', 'okul'] for bluokul). Linking vowels are included as separate
+    # elements (e.g., ['mult', 'e', 'hom'] for multehom).
+    core: list[str]
     suffixes: list[str]
     preferred_ending: str
     definitions: list[str]
@@ -41,9 +43,11 @@ class CoredWord:
     parts: list[CoredWord] = dataclasses.field(default_factory=list)
 
     def __str__(self) -> str:
+        from glosilo.eostem import core_display
         parts = ", ".join(str(part) for part in self.parts)
+        core_str = core_display(self.core)
         return (
-            f"{self.orig_word} = {self.prefixes}+{self.core}({self.core_definition})"
+            f"{self.orig_word} = {self.prefixes}+{core_str}({self.core_definition})"
             f"+{self.suffixes}+{self.preferred_ending} = {self.preferred_definition} "
             f"[{parts}]"
         )

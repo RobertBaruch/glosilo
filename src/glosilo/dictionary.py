@@ -71,21 +71,23 @@ class Dictionary:
             # For cores that are vortetoj, we just use the preferred
             # definition as the core definition. Except for ĉiel, which is easily
             # confused with ĉielo.
+            from glosilo.eostem import core_to_str
+
+            core_str = core_to_str(analysis.core)
             if (
-                analysis.core in (consts.VORTETOJ - {"ĉiel"})
-                and analysis.core in self.words
+                len(analysis.core) == 1
+                and analysis.core[0] in (consts.VORTETOJ - {"ĉiel"})
+                and core_str in self.words
             ):
-                analysis.core_definition = self.words[
-                    analysis.core
-                ].preferred_definition
+                analysis.core_definition = self.words[core_str].preferred_definition
                 if word == self.debug_word:
-                    print(f"  Vorteto core {analysis.core} for {word}; new analysis {analysis}")
+                    print(f"  Vorteto core {core_str} for {word}; new analysis {analysis}")
                 continue
 
             for ending in [analysis.preferred_ending] + consts.ENDING_ALTERNATIVES[
                 analysis.preferred_ending
             ]:
-                root = analysis.core + ending
+                root = core_to_str(analysis.core) + ending
                 if word == self.debug_word:
                     print(f"  Trying root {root}")
                 if root in self.words:
@@ -163,6 +165,8 @@ class Dictionary:
         We always use the LAST num_prefixes prefixes and the FIRST num_suffixes
         suffixes.
         """
+        from glosilo.eostem import core_to_str
+
         if self.debug:
             print(f" Trying {num_prefixes} prefixes and {num_suffixes} suffixes")
         prefix = ""
@@ -173,7 +177,7 @@ class Dictionary:
             prefix = "".join(cored_word.prefixes[-num_prefixes:])
         if num_suffixes:
             suffix = "".join(cored_word.suffixes[:num_suffixes])
-        root = prefix + cored_word.core + suffix
+        root = prefix + core_to_str(cored_word.core) + suffix
         endings = [preferred_ending]
         if preferred_ending in consts.ENDING_ALTERNATIVES:
             endings += consts.ENDING_ALTERNATIVES[preferred_ending]
@@ -184,7 +188,7 @@ class Dictionary:
             if analysis.preferred_definition != "???":
                 return analysis
 
-        return structs.CoredWord(cored_word.orig_word, [], "", [], "", [], "???", "???")
+        return structs.CoredWord(cored_word.orig_word, [], [""], [], "", [], "???", "???")
 
     def _get_saved_gloss(self, word: str) -> structs.CoredWord:
         analysis = self.words.get(
@@ -214,13 +218,20 @@ class Dictionary:
                     return analysis
 
         # If the core is a vorteto, then use that in the core definition.
-        if analysis.core in consts.VORTETOJ and analysis.core in self.words:
+        from glosilo.eostem import core_to_str
+
+        core_str = core_to_str(analysis.core)
+        if (
+            len(analysis.core) == 1
+            and analysis.core[0] in consts.VORTETOJ
+            and core_str in self.words
+        ):
             analysis = copy.copy(analysis)
-            analysis.core_definition = self.words[analysis.core].preferred_definition
+            analysis.core_definition = self.words[core_str].preferred_definition
             analysis.preferred_definition = "???"
             return analysis
 
-        return structs.CoredWord(word, [], "", [], "", [], "???", "???")
+        return structs.CoredWord(word, [], [""], [], "", [], "???", "???")
 
     def get_hyphenated_gloss(self, word: str) -> structs.CoredWord:
         """Analyzes a hyphenated word."""
