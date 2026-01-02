@@ -12,7 +12,9 @@ from glosilo import structs
 
 DEBUGWORD = ""
 RAD_DICTIONARY_PATH = Path("F:/retavortaropy/rad_dictionary.json")
+KAP_DICTIONARY_PATH = Path("F:/retavortaropy/kap_dictionary.json")
 _rad_dictionary_cache: dict[str, str] | None = None
+_kap_dictionary_cache: dict[str, str] | None = None
 
 
 def _get_rad_dictionary() -> dict[str, str]:
@@ -31,6 +33,168 @@ def _get_rad_dictionary() -> dict[str, str]:
     # _rad_dictionary_cache is guaranteed to be dict[str, str] here, not None
     assert _rad_dictionary_cache is not None
     return _rad_dictionary_cache
+
+
+def _get_kap_dictionary() -> dict[str, str]:
+    """Get the kap dictionary, loading it once and caching it."""
+    global _kap_dictionary_cache
+    if _kap_dictionary_cache is None:
+        if KAP_DICTIONARY_PATH.exists():
+            try:
+                with open(KAP_DICTIONARY_PATH, "r", encoding="utf-8") as f:
+                    _kap_dictionary_cache = json.load(f)
+            except (json.JSONDecodeError, IOError):
+                # If loading fails, use empty dict
+                _kap_dictionary_cache = {}
+        else:
+            _kap_dictionary_cache = {}
+    # _kap_dictionary_cache is guaranteed to be dict[str, str] here, not None
+    assert _kap_dictionary_cache is not None
+    return _kap_dictionary_cache
+
+
+def lookup_kap(word_without_ending: str) -> bool:
+    """Check if word (without ending) exists in kap_dictionary with any ending.
+
+    Args:
+        word_without_ending: The word core/root without its grammatical ending
+
+    Returns:
+        True if word+ending exists in kap_dict for any ending in ["a", "e", "i", "o"]
+    """
+    kap_dict = _get_kap_dictionary()
+    return any(word_without_ending + ending in kap_dict
+               for ending in ["a", "e", "i", "o"])
+
+
+def _strip_affixes2(word_without_ending: str) -> tuple[str, list[str], list[str]]:
+    """Alternative algorithm for stripping affixes using iterative reconstruction.
+
+    This algorithm:
+    1. Strips one preposition from the beginning (if possible)
+    2. Strips all prefixes from the remainder
+    3. Strips all suffixes from what's left
+    4. Iterates through all combinations of "unstripping" prefixes and suffixes
+    5. For each combination, reconstructs the root and checks if it exists in rad_dict
+    6. Returns the configuration with the longest validated root
+
+    Args:
+        word_without_ending: The word with its ending already removed
+
+    Returns:
+        Tuple of (core, prefixes, suffixes) where prefixes may include a preposition
+    """
+    rad_dict = _get_rad_dictionary()
+
+    # Step 1: Try to strip one preposition from the beginning
+    preposition: str | None = None
+    remainder = word_without_ending
+
+    for prep in sorted(consts.PREPOSITIONS, key=len, reverse=True):
+        if word_without_ending.startswith(prep):
+            preposition = prep
+            remainder = word_without_ending[len(prep):]
+            break
+
+    # Step 2: Strip all prefixes from the remainder
+    temp_prefixes: list[str] = []
+    while True:
+        found_prefix = False
+        for prefix in consts.PREFIXES:
+            if remainder.startswith(prefix):
+                temp_prefixes.append(prefix)
+                remainder = remainder[len(prefix):]
+                found_prefix = True
+                break
+        if not found_prefix:
+            break
+
+    # Step 3: Strip all suffixes from what's left
+    temp_suffixes: list[str] = []
+    while True:
+        found_suffix = False
+        for suffix in consts.SUFFIXES:
+            if remainder.endswith(suffix):
+                temp_suffixes.insert(0, suffix)
+                remainder = remainder[:-len(suffix)]
+                found_suffix = True
+                break
+        if not found_suffix:
+            break
+
+    # Now remainder is the core after maximum stripping
+    # temp_prefixes contains all stripped prefixes
+    # temp_suffixes contains all stripped suffixes
+
+    # Step 4 & 5: Iterate through all combinations, reconstruct roots, and validate
+    deconstructions: list[tuple[list[str], str, list[str], int, int]] = []
+
+    # Try all combinations of how many prefixes/suffixes to "unstri" (add back to core)
+    for num_prefixes_to_keep_in_core in range(len(temp_prefixes) + 1):
+        for num_suffixes_to_keep_in_core in range(len(temp_suffixes) + 1):
+            # Reconstruct the root
+            # Prefixes that go back into core: last num_prefixes_to_keep_in_core
+            # Suffixes that go back into core: first num_suffixes_to_keep_in_core
+            reconstructed_root_parts = []
+
+            if num_prefixes_to_keep_in_core > 0:
+                reconstructed_root_parts.extend(temp_prefixes[-num_prefixes_to_keep_in_core:])
+
+            reconstructed_root_parts.append(remainder)
+
+            if num_suffixes_to_keep_in_core > 0:
+                reconstructed_root_parts.extend(temp_suffixes[:num_suffixes_to_keep_in_core])
+
+            reconstructed_root = "".join(reconstructed_root_parts)
+
+            # Check if this root is valid
+            if reconstructed_root in rad_dict or reconstructed_root in consts.CORE_IMMUNE_CORES:
+                # This is a valid configuration
+                # Prefixes that were stripped: first (len - num_to_keep) prefixes
+                stripped_prefixes = temp_prefixes[:len(temp_prefixes) - num_prefixes_to_keep_in_core]
+                # Suffixes that were stripped: last (len - num_to_keep) suffixes
+                stripped_suffixes = temp_suffixes[num_suffixes_to_keep_in_core:]
+
+                # Add preposition to front of prefixes if it exists
+                if preposition:
+                    stripped_prefixes = [preposition] + stripped_prefixes
+
+                # Special case for "ne": prefer it as a root only if there are no suffixes,
+                # or the only suffix is "ig" or "ul"
+                # This makes "neig" and "neul" have "ne" as core, but "neebl" and "neind"
+                # have "ebl" and "ind" as core
+                score_penalty = 0
+                if reconstructed_root == "ne" and stripped_suffixes:
+                    # If "ne" is the core and there are suffixes, check if they're ig/ul only
+                    if len(stripped_suffixes) == 1 and stripped_suffixes[0] in ["ig", "ul"]:
+                        # Boost this configuration (negative penalty = higher priority)
+                        score_penalty = -1000
+                    else:
+                        # Penalize this configuration to prefer other decompositions
+                        score_penalty = 1000
+
+                # Also penalize "ig" or "ul" as cores when "ne" is a prefix
+                if reconstructed_root in ["ig", "ul"] and "ne" in stripped_prefixes:
+                    score_penalty = 1000
+
+                deconstructions.append((
+                    stripped_prefixes,
+                    reconstructed_root,
+                    stripped_suffixes,
+                    len(reconstructed_root),
+                    score_penalty
+                ))
+
+    # Step 6: Choose the element with the longest reconstructed root
+    if deconstructions:
+        # Sort by penalty (ascending), then root length (descending), then affixes stripped (descending)
+        deconstructions.sort(key=lambda x: (-x[4], x[3], len(x[0]) + len(x[2])), reverse=True)
+        best = deconstructions[0]
+        return best[1], best[0], best[2]  # core, prefixes, suffixes
+
+    # Fallback: return with maximum stripping
+    all_prefixes = ([preposition] if preposition else []) + temp_prefixes
+    return remainder, all_prefixes, temp_suffixes
 
 
 def maybe_strip_plural_acc_ending(word: str) -> str:
@@ -80,8 +244,8 @@ def _strip_suffixes(
 
     return word, suffixes
 
-def _strip_affixes(word: str) -> tuple[str, list[str], list[str]]:
-    """Strips all prefixes and suffixes from a word."""
+def _strip_affixes(word_without_ending: str) -> tuple[str, list[str], list[str]]:
+    """Strips all prefixes and suffixes from a word without an ending."""
     prefixes: list[str] = []
     suffixes: list[str] = []
     preposition_prefixes: list[str] = []
@@ -101,7 +265,7 @@ def _strip_affixes(word: str) -> tuple[str, list[str], list[str]]:
 
     # Try all combinations of prefix stripping
     for num_prefixes in range(10):  # Reasonable upper limit
-        temp_word = word
+        temp_word = word_without_ending
         temp_prefixes = []
 
         # Strip num_prefixes prefixes
@@ -151,24 +315,24 @@ def _strip_affixes(word: str) -> tuple[str, list[str], list[str]]:
 
     # Use best config if found, otherwise use normal stripping
     if best_config:
-        prefixes, word, suffixes = best_config
+        prefixes, word_without_ending, suffixes = best_config
     else:
         # Fall back: strip all standard prefixes then suffixes normally
-        while any((word.startswith(prefix) for prefix in consts.PREFIXES)):
+        while any((word_without_ending.startswith(prefix) for prefix in consts.PREFIXES)):
             for prefix in consts.PREFIXES:
-                if word.startswith(prefix):
+                if word_without_ending.startswith(prefix):
                     prefixes.append(prefix)
-                    word = word[len(prefix):]
+                    word_without_ending = word_without_ending[len(prefix):]
                     break
 
         # Try stripping prepositions (only if no best_config)
         for prep in sorted(consts.PREPOSITIONS, key=len, reverse=True):
-            if word.startswith(prep):
-                remainder = word[len(prep):]
+            if word_without_ending.startswith(prep):
+                remainder = word_without_ending[len(prep):]
                 # Check if remainder is valid
                 if remainder in consts.CORE_IMMUNE_CORES or remainder in rad_dict:
                     preposition_prefixes.append(prep)
-                    word = remainder
+                    word_without_ending = remainder
                     break
                 # Check after stripping suffixes
                 test_rem = remainder
@@ -178,17 +342,17 @@ def _strip_affixes(word: str) -> tuple[str, list[str], list[str]]:
                         if pot_root and (pot_root in consts.CORE_IMMUNE_CORES or
                                        pot_root in rad_dict):
                             preposition_prefixes.append(prep)
-                            word = remainder
+                            word_without_ending = remainder
                             break
                 if preposition_prefixes:
                     break
 
         # Strip suffixes
-        while any((word.endswith(suffix) for suffix in consts.SUFFIXES)):
+        while any((word_without_ending.endswith(suffix) for suffix in consts.SUFFIXES)):
             for suffix in consts.SUFFIXES:
-                if word.endswith(suffix):
+                if word_without_ending.endswith(suffix):
                     suffixes.insert(0, suffix)
-                    word = word[:-len(suffix)]
+                    word_without_ending = word_without_ending[:-len(suffix)]
                     break
 
     # Combine all prefixes (standard prefixes first, then prepositions)
@@ -198,7 +362,7 @@ def _strip_affixes(word: str) -> tuple[str, list[str], list[str]]:
     # If we hit a core-immune word, then use only those prefixes and suffixes.
     for num_suffixes in range(len(suffixes), -1, -1):
         for num_prefixes in range(len(all_prefixes), -1, -1):
-            core = word
+            core = word_without_ending
             if num_prefixes:
                 core = "".join(all_prefixes[-num_prefixes:]) + core
             if num_suffixes:
@@ -209,7 +373,7 @@ def _strip_affixes(word: str) -> tuple[str, list[str], list[str]]:
                 suffixes = suffixes[num_suffixes:]
                 return core, all_prefixes, suffixes
 
-    return word, all_prefixes, suffixes
+    return word_without_ending, all_prefixes, suffixes
 
 def replace_verb_ending(word: str) -> str:
     """Replace the verb ending from a word."""
