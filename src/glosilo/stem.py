@@ -14,10 +14,11 @@ from glosilo import eostem
 from glosilo.structs import CoredWord
 
 DICTIONARY_PATH = Path("F:/retavortaropy/kap_dictionary.json")
+RAD_DICTIONARY_PATH = Path("F:/retavortaropy/rad_dictionary.json")
 
 
 def load_dictionary() -> dict[str, str] | None:
-    """Load the dictionary from the JSON file.
+    """Load the kap dictionary from the JSON file.
 
     Returns:
         Dictionary mapping words to file paths, or None if file not found.
@@ -33,18 +34,37 @@ def load_dictionary() -> dict[str, str] | None:
         return None
 
 
-def verify_stem(cored: CoredWord, dictionary: dict[str, str]) -> tuple[bool, str]:
+def load_rad_dictionary() -> dict[str, str] | None:
+    """Load the rad (root) dictionary from the JSON file.
+
+    Returns:
+        Dictionary mapping roots to definitions, or None if file not found.
+    """
+    if not RAD_DICTIONARY_PATH.exists():
+        return None
+
+    try:
+        with open(RAD_DICTIONARY_PATH, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except (json.JSONDecodeError, IOError) as e:
+        print(f"Warning: Failed to load rad dictionary: {e}", file=sys.stderr)
+        return None
+
+
+def verify_stem(cored: CoredWord, dictionary: dict[str, str], rad_dictionary: dict[str, str] | None = None) -> tuple[bool, str]:
     """Verify that the stem exists in the dictionary.
 
     The stem is formed by combining the core with the ending, and optionally
     with suffixes if needed. First tries core+ending (e.g., "paroli"), then
     tries core+suffixes+ending (e.g., "subigi") if the first lookup fails.
+    Also checks if the core itself exists in rad_dictionary.
 
     Checks both lowercase and capitalized versions of the lookup word.
 
     Args:
         cored: The cored word to verify
         dictionary: Dictionary mapping words to file paths
+        rad_dictionary: Optional rad dictionary mapping roots to definitions
 
     Returns:
         Tuple of (found, lookup_word) where found is True if the word exists
@@ -76,10 +96,17 @@ def verify_stem(cored: CoredWord, dictionary: dict[str, str]) -> tuple[bool, str
         if found:
             lookup_word = lookup_word_with_suffixes
 
+    # Third try: check if the core itself is in rad_dictionary
+    # This handles cases where the root exists even if the full word doesn't
+    if not found and rad_dictionary is not None:
+        if cored.core in rad_dictionary:
+            found = True
+            # Keep the original lookup_word for display
+
     return found, lookup_word
 
 
-def format_cored_word(cored: CoredWord, verify: bool = False, dictionary: dict[str, str] | None = None) -> str:
+def format_cored_word(cored: CoredWord, verify: bool = False, dictionary: dict[str, str] | None = None, rad_dictionary: dict[str, str] | None = None) -> str:
     """Format a CoredWord for display as a one-line output.
 
     Format: word = prefix+core+suffix+ending [lookup: word | FOUND/NOT FOUND]
@@ -105,7 +132,7 @@ def format_cored_word(cored: CoredWord, verify: bool = False, dictionary: dict[s
 
     # Add verification result if requested
     if verify and dictionary is not None:
-        found, lookup_word = verify_stem(cored, dictionary)
+        found, lookup_word = verify_stem(cored, dictionary, rad_dictionary)
         status = "FOUND" if found else "NOT FOUND"
         result += f" [lookup: {lookup_word} | {status}]"
 
@@ -148,8 +175,9 @@ def main() -> None:
         print("Error: No word provided", file=sys.stderr)
         sys.exit(1)
 
-    # Load dictionary if verification requested
+    # Load dictionaries if verification requested
     dictionary: dict[str, str] | None = None
+    rad_dictionary: dict[str, str] | None = None
     if verify:
         dictionary = load_dictionary()
         if dictionary is None:
@@ -157,17 +185,27 @@ def main() -> None:
             print("Continuing without verification...\n", file=sys.stderr)
             verify = False
 
+        rad_dictionary = load_rad_dictionary()
+        if rad_dictionary is None:
+            print(f"Warning: Rad dictionary not found at {RAD_DICTIONARY_PATH}", file=sys.stderr)
+
     # Stem each word
     for word in words:
         cored = eostem.core_word(word, debug=debug)
 
+        # When verifying, only show words that are NOT FOUND
+        if verify and dictionary is not None:
+            found, _ = verify_stem(cored, dictionary, rad_dictionary)
+            if found:
+                continue  # Skip words that are found
+
         # Print results
         if not debug:
-            print(format_cored_word(cored, verify=verify, dictionary=dictionary))
+            print(format_cored_word(cored, verify=verify, dictionary=dictionary, rad_dictionary=rad_dictionary))
         else:
             # Debug mode already prints detailed info during processing
             print("\n" + "=" * 50)
-            print(format_cored_word(cored, verify=verify, dictionary=dictionary))
+            print(format_cored_word(cored, verify=verify, dictionary=dictionary, rad_dictionary=rad_dictionary))
 
 
 if __name__ == "__main__":

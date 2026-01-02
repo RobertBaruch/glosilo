@@ -86,49 +86,110 @@ def _strip_affixes(word: str) -> tuple[str, list[str], list[str]]:
     suffixes: list[str] = []
     preposition_prefixes: list[str] = []
 
-    # First strip standard prefixes (mal, ne, ek, dis)
-    while any((word.startswith(prefix) for prefix in consts.PREFIXES)):
-        for prefix in consts.PREFIXES:
-            if word.startswith(prefix):
-                prefixes.append(prefix)
-                word = word[len(prefix) :]
-                break
-
-    # Try stripping prepositions as prefixes
-    # Only strip if the remainder is a valid root in rad_dictionary or CORE_IMMUNE_CORES
-    # This prevents "forto" → "for+to" (incorrect, "to" is not a root)
-    # but allows "alprem" → "al+prem" (correct, "prem" is a root)
-    # Also allows "ensumigi" → "en+sum+ig+i" by checking if remainder after
-    # stripping suffixes would be valid
+    # Load rad_dictionary for validation
     rad_dict = _get_rad_dictionary()
-    for preposition in sorted(consts.PREPOSITIONS, key=len, reverse=True):
-        if word.startswith(preposition):
-            remainder = word[len(preposition):]
-            # Check if remainder is valid as-is
-            if remainder in consts.CORE_IMMUNE_CORES or remainder in rad_dict:
-                preposition_prefixes.append(preposition)
-                word = remainder
-                break
-            # Also check if remainder would be valid after stripping suffixes
-            # This handles cases like "ensumig" → "en" + "sumig" where "sum" is valid
-            test_remainder = remainder
-            for suffix in consts.SUFFIXES:
-                if test_remainder.endswith(suffix):
-                    potential_root = test_remainder[:-len(suffix)]
-                    if potential_root and (potential_root in consts.CORE_IMMUNE_CORES or potential_root in rad_dict):
-                        preposition_prefixes.append(preposition)
-                        word = remainder
-                        break
-            if preposition_prefixes:
+
+    # Find longest root match in rad_dictionary by trying combinations
+    # of prefix/suffix stripping. E.g. for "ekvilibrigit", we find
+    # "ekvilibr" (no prefixes, suffixes=["ig","it"]) is longest match.
+    #
+    # Scoring: prefer cores that are NOT prefixes. If core is a prefix,
+    # score is reduced. This ensures "neigi" → "ne+ig+i" not "ne+igi".
+    best_score = -1
+    best_config = None  # (prefixes, core, suffixes)
+
+    # Try all combinations of prefix stripping
+    for num_prefixes in range(10):  # Reasonable upper limit
+        temp_word = word
+        temp_prefixes = []
+
+        # Strip num_prefixes prefixes
+        for _ in range(num_prefixes):
+            found = False
+            for prefix in consts.PREFIXES:
+                if temp_word.startswith(prefix):
+                    temp_prefixes.append(prefix)
+                    temp_word = temp_word[len(prefix):]
+                    found = True
+                    break
+            if not found:
                 break
 
-    # Strip suffixes
-    while any((word.endswith(suffix) for suffix in consts.SUFFIXES)):
-        for suffix in consts.SUFFIXES:
-            if word.endswith(suffix):
-                suffixes.insert(0, suffix)
-                word = word[: -len(suffix)]
-                break
+        # Try all combinations of suffix stripping
+        for num_suffixes in range(10):  # Reasonable upper limit
+            test_word = temp_word
+            test_suffixes = []
+
+            # Strip num_suffixes suffixes
+            for _ in range(num_suffixes):
+                found = False
+                for suffix in consts.SUFFIXES:
+                    if test_word.endswith(suffix):
+                        test_suffixes.insert(0, suffix)
+                        test_word = test_word[:-len(suffix)]
+                        found = True
+                        break
+                if not found:
+                    break
+
+            # Check if test_word is valid root
+            if test_word and (test_word in rad_dict or
+                            test_word in consts.CORE_IMMUNE_CORES):
+                # Score: length of root, but penalize if core is a known prefix
+                # This makes "ne+ig" preferred over "ne+igi" for "neigi"
+                score = len(test_word) * 10
+                if test_word in consts.PREFIXES:
+                    score -= 100  # Heavy penalty for prefix as core
+
+                if score > best_score:
+                    best_score = score
+                    best_config = (
+                        temp_prefixes[:],
+                        test_word,
+                        test_suffixes[:]
+                    )
+
+    # Use best config if found, otherwise use normal stripping
+    if best_config:
+        prefixes, word, suffixes = best_config
+    else:
+        # Fall back: strip all standard prefixes then suffixes normally
+        while any((word.startswith(prefix) for prefix in consts.PREFIXES)):
+            for prefix in consts.PREFIXES:
+                if word.startswith(prefix):
+                    prefixes.append(prefix)
+                    word = word[len(prefix):]
+                    break
+
+        # Try stripping prepositions (only if no best_config)
+        for prep in sorted(consts.PREPOSITIONS, key=len, reverse=True):
+            if word.startswith(prep):
+                remainder = word[len(prep):]
+                # Check if remainder is valid
+                if remainder in consts.CORE_IMMUNE_CORES or remainder in rad_dict:
+                    preposition_prefixes.append(prep)
+                    word = remainder
+                    break
+                # Check after stripping suffixes
+                test_rem = remainder
+                for suffix in consts.SUFFIXES:
+                    if test_rem.endswith(suffix):
+                        pot_root = test_rem[:-len(suffix)]
+                        if pot_root and (pot_root in consts.CORE_IMMUNE_CORES or
+                                       pot_root in rad_dict):
+                            preposition_prefixes.append(prep)
+                            word = remainder
+                            break
+                if preposition_prefixes:
+                    break
+
+        # Strip suffixes
+        while any((word.endswith(suffix) for suffix in consts.SUFFIXES)):
+            for suffix in consts.SUFFIXES:
+                if word.endswith(suffix):
+                    suffixes.insert(0, suffix)
+                    word = word[:-len(suffix)]
+                    break
 
     # Combine all prefixes (standard prefixes first, then prepositions)
     all_prefixes = prefixes + preposition_prefixes
@@ -202,6 +263,12 @@ def core_word(word: str, debug: bool = False) -> structs.CoredWord:
     if suffixes and suffixes[-1] in consts.VERB_SUFFIXES:
         if orig_word == DEBUGWORD:
             print(f"  Verb suffix: {suffixes[-1]}; orig_ending changed to 'i'")
+        orig_ending = "i"
+    # Also change ending to "i" if the core itself is a verb suffix
+    # (e.g., "neebla" → "ne+ebl+i" where "ebl" is the core)
+    if core in consts.VERB_SUFFIXES:
+        if orig_word == DEBUGWORD:
+            print(f"  Core is verb suffix: {core}; orig_ending changed to 'i'")
         orig_ending = "i"
 
     # If there's no core, try to get one from the prefixes or suffixes.
