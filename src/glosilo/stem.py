@@ -4,10 +4,12 @@ Usage:
     python -m glosilo.stem <word>
     python -m glosilo.stem --debug <word>
     python -m glosilo.stem --verify <word>
+    python -m glosilo.stem --verify "sentence with multiple words"
 """
 
 import sys
 import io
+import string
 from glosilo import eostem
 from glosilo.structs import CoredWord
 
@@ -147,6 +149,10 @@ def main() -> None:
             file=sys.stderr,
         )
         print("  python -m glosilo.stem --debug --verify ekdiri", file=sys.stderr)
+        print(
+            '  python -m glosilo.stem --verify "unu du bonfaras, kie?"',
+            file=sys.stderr,
+        )
         sys.exit(1)
 
     debug: bool = False
@@ -160,7 +166,13 @@ def main() -> None:
         elif arg == "--verify":
             verify = True
         else:
-            words.append(arg)
+            # Split the argument into words and strip punctuation
+            # This allows quoted strings like "unu du tri, kvar?"
+            for token in arg.split():
+                # Remove punctuation from the token
+                word = token.strip(string.punctuation)
+                if word:  # Only add non-empty words
+                    words.append(word)
 
     if not words:
         print("Error: No word provided", file=sys.stderr)
