@@ -17,6 +17,7 @@ KAP_DICTIONARY_PATH = Path("F:/retavortaropy/kap_dictionary.json")
 
 class Stemmer:
     """Stemmer utility."""
+
     _rad_dictionary_cache: dict[str, str]
     _kap_dictionary_cache: dict[str, str]
 
@@ -34,6 +35,7 @@ class Stemmer:
             self._rad_dictionary_cache = json.load(f)
 
     def get_rad_dictionary(self) -> dict[str, str]:
+        """Returns the rad dictionary."""
         return self._rad_dictionary_cache
 
     def _load_kap_dictionary(self) -> None:
@@ -46,6 +48,7 @@ class Stemmer:
             self._kap_dictionary_cache = json.load(f)
 
     def get_kap_dictionary(self) -> dict[str, str]:
+        """Returns the kap dictionary."""
         return self._kap_dictionary_cache
 
     def lookup_kap(self, word_without_ending: str) -> bool:
@@ -366,7 +369,7 @@ class Stemmer:
         # Also try all combinations WITHOUT the preposition stripped
         for num_prefixes_to_keep_in_core in range(len(no_prep_temp_prefixes) + 1):
             for num_suffixes_to_keep_in_core in range(len(no_prep_temp_suffixes) + 1):
-                reconstructed_root_parts: list[str] = []
+                reconstructed_root_parts = []
 
                 if num_prefixes_to_keep_in_core > 0:
                     reconstructed_root_parts.extend(
@@ -442,7 +445,8 @@ class Stemmer:
             compound_score_original = sum(
                 len(p) for p in compound_parts_original if len(p) > 1
             )
-            # Smaller penalty for compounds without affixes (these are more likely to be true compounds)
+            # Smaller penalty for compounds without affixes (these are more likely to
+            # be true compounds)
             compound_penalty_original = 5
             deconstructions.append(
                 (
@@ -456,7 +460,8 @@ class Stemmer:
 
         # Step 6: Choose the element with the longest reconstructed root
         if deconstructions:
-            # Sort by penalty (ascending), then root length (descending), then affixes stripped (descending)
+            # Sort by penalty (ascending), then root length (descending), then affixes
+            # stripped (descending)
             deconstructions.sort(
                 key=lambda x: (-x[4], x[3], len(x[0]) + len(x[2])), reverse=True
             )
@@ -480,41 +485,6 @@ class Stemmer:
         if word.endswith(("n", "j")):
             return word[:-1]
         return word
-
-    def _strip_prefixes(
-        self, word: str, curr_prefixes: list[str] | None = None
-    ) -> tuple[str, list[str]]:
-        """Strips a prefix from a word."""
-        prefixes: list[str] = curr_prefixes or []
-
-        # Check if word is a core-immune word or vortetoj that shouldn't be split
-        if word.startswith(tuple(consts.CORE_IMMUNE_CORES | consts.VORTETOJ)):
-            return word, prefixes
-
-        for prefix in consts.PREFIXES:
-            if word.startswith(prefix):
-                prefixes.append(prefix)
-                word = word[len(prefix) :]
-                return self._strip_prefixes(word, prefixes)
-
-        return word, prefixes
-
-    def _strip_suffixes(
-        self, word: str, curr_suffixes: list[str] | None = None
-    ) -> tuple[str, list[str]]:
-        """Strips all suffixes from a word."""
-        suffixes: list[str] = curr_suffixes or []
-
-        if word in consts.CORE_IMMUNE_CORES | consts.VORTETOJ:
-            return word, suffixes
-
-        for suffix in consts.SUFFIXES:
-            if word.endswith(suffix):
-                suffixes.insert(0, suffix)
-                word = word[: -len(suffix)]
-                return self._strip_suffixes(word, suffixes)
-
-        return word, suffixes
 
     def _split_ending(self, word: str, debug: bool = False) -> tuple[str, str]:
         orig_ending = ""
@@ -556,7 +526,9 @@ class Stemmer:
         core, prefixes, suffixes = self._strip_affixes2(word)
 
         if orig_word == DEBUGWORD:
-            print(f"  Stripped: {prefixes}+{self.core_display(core)}+{suffixes}+{orig_ending}")
+            print(
+                f"  Stripped: {prefixes}+{self.core_display(core)}+{suffixes}+{orig_ending}"
+            )
         # If the last suffix is one that converts a verb to another type of word, then
         # change the ending to "i".
         if suffixes and suffixes[-1] in consts.VERB_SUFFIXES:
