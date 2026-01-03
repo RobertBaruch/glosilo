@@ -107,6 +107,16 @@ def test_maltrankvilig_with_prefix(stemmer: eostem.Stemmer):
     assert core == ["trankvil"]
     assert suffixes == []
 
+def test_dezert_not_split_as_preposition(stemmer: eostem.Stemmer):
+    """Test that 'dezert' is not incorrectly split as 'de+zert'."""
+    core, prefixes, suffixes = stemmer._strip_affixes2("dezert")
+    # 'dezert' is a valid root in rad_dictionary
+    # 'zert' is NOT a valid root
+    # Should NOT treat 'de' as a preposition prefix
+    assert prefixes == []
+    assert core == ["dezert"]
+    assert suffixes == []
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

@@ -264,6 +264,36 @@ class Stemmer:
         # We'll also consider compound splits as one of the possibilities
         deconstructions: list[tuple[list[str], list[str], list[str], int, int]] = []
 
+        # IMPORTANT: Also try without the preposition stripped!
+        # This handles cases like "dezert" where "de" looks like a preposition
+        # but "dezert" is actually a complete root
+        no_prep_remainder = word_without_ending
+        no_prep_temp_prefixes: list[str] = []
+        no_prep_temp_suffixes: list[str] = []
+
+        # Strip prefixes and suffixes from the word without preposition stripping
+        while True:
+            found_prefix = False
+            for prefix in consts.PREFIXES:
+                if no_prep_remainder.startswith(prefix):
+                    no_prep_temp_prefixes.append(prefix)
+                    no_prep_remainder = no_prep_remainder[len(prefix) :]
+                    found_prefix = True
+                    break
+            if not found_prefix:
+                break
+
+        while True:
+            found_suffix = False
+            for suffix in consts.SUFFIXES:
+                if no_prep_remainder.endswith(suffix):
+                    no_prep_temp_suffixes.insert(0, suffix)
+                    no_prep_remainder = no_prep_remainder[: -len(suffix)]
+                    found_suffix = True
+                    break
+            if not found_suffix:
+                break
+
         # Try all combinations of how many prefixes/suffixes to "unstri" (add back to core)
         for num_prefixes_to_keep_in_core in range(len(temp_prefixes) + 1):
             for num_suffixes_to_keep_in_core in range(len(temp_suffixes) + 1):
@@ -327,6 +357,57 @@ class Stemmer:
                             self.make_core(
                                 reconstructed_root
                             ),  # Convert to list[str] format
+                            stripped_suffixes,
+                            len(reconstructed_root),
+                            score_penalty,
+                        )
+                    )
+
+        # Also try all combinations WITHOUT the preposition stripped
+        for num_prefixes_to_keep_in_core in range(len(no_prep_temp_prefixes) + 1):
+            for num_suffixes_to_keep_in_core in range(len(no_prep_temp_suffixes) + 1):
+                reconstructed_root_parts: list[str] = []
+
+                if num_prefixes_to_keep_in_core > 0:
+                    reconstructed_root_parts.extend(
+                        no_prep_temp_prefixes[-num_prefixes_to_keep_in_core:]
+                    )
+
+                reconstructed_root_parts.append(no_prep_remainder)
+
+                if num_suffixes_to_keep_in_core > 0:
+                    reconstructed_root_parts.extend(
+                        no_prep_temp_suffixes[:num_suffixes_to_keep_in_core]
+                    )
+
+                reconstructed_root = "".join(reconstructed_root_parts)
+
+                if reconstructed_root in rad_dict:
+                    stripped_prefixes = no_prep_temp_prefixes[
+                        : len(no_prep_temp_prefixes) - num_prefixes_to_keep_in_core
+                    ]
+                    stripped_suffixes = no_prep_temp_suffixes[
+                        num_suffixes_to_keep_in_core:
+                    ]
+
+                    # No preposition in this case
+                    score_penalty = 0
+                    if reconstructed_root == "ne" and stripped_suffixes:
+                        if len(stripped_suffixes) == 1 and stripped_suffixes[0] in [
+                            "ig",
+                            "ul",
+                        ]:
+                            score_penalty = -1000
+                        else:
+                            score_penalty = 1000
+
+                    if reconstructed_root in ["ig", "ul"] and "ne" in stripped_prefixes:
+                        score_penalty = 1000
+
+                    deconstructions.append(
+                        (
+                            stripped_prefixes,
+                            self.make_core(reconstructed_root),
                             stripped_suffixes,
                             len(reconstructed_root),
                             score_penalty,

@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(.venv/Scripts/python:*)",
+      "Bash(more:*)",
+      "Bash(cat:*)",
+      "Bash(python -m glosilo.stem:*)",
+      "Bash(python -m pytest:*)"
+    ]
+  }
+}
