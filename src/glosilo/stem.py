@@ -6,52 +6,18 @@ Usage:
     python -m glosilo.stem --verify <word>
 """
 
-import json
 import sys
 import io
-from pathlib import Path
 from glosilo import eostem
 from glosilo.structs import CoredWord
 
-DICTIONARY_PATH = Path("F:/retavortaropy/kap_dictionary.json")
-RAD_DICTIONARY_PATH = Path("F:/retavortaropy/rad_dictionary.json")
 
-
-def load_dictionary() -> dict[str, str] | None:
-    """Load the kap dictionary from the JSON file.
-
-    Returns:
-        Dictionary mapping words to file paths, or None if file not found.
-    """
-    if not DICTIONARY_PATH.exists():
-        return None
-
-    try:
-        with open(DICTIONARY_PATH, "r", encoding="utf-8") as f:
-            return json.load(f)
-    except (json.JSONDecodeError, IOError) as e:
-        print(f"Warning: Failed to load dictionary: {e}", file=sys.stderr)
-        return None
-
-
-def load_rad_dictionary() -> dict[str, str] | None:
-    """Load the rad (root) dictionary from the JSON file.
-
-    Returns:
-        Dictionary mapping roots to definitions, or None if file not found.
-    """
-    if not RAD_DICTIONARY_PATH.exists():
-        return None
-
-    try:
-        with open(RAD_DICTIONARY_PATH, "r", encoding="utf-8") as f:
-            return json.load(f)
-    except (json.JSONDecodeError, IOError) as e:
-        print(f"Warning: Failed to load rad dictionary: {e}", file=sys.stderr)
-        return None
-
-
-def verify_stem(cored: CoredWord, dictionary: dict[str, str], rad_dictionary: dict[str, str] | None = None) -> tuple[bool, str]:
+def verify_stem(
+    stemmer: eostem.Stemmer,
+    cored: CoredWord,
+    dictionary: dict[str, str],
+    rad_dictionary: dict[str, str] | None = None,
+) -> tuple[bool, str]:
     """Verify that the stem exists in the dictionary.
 
     The stem is formed by combining the core with the ending, and optionally
@@ -70,12 +36,12 @@ def verify_stem(cored: CoredWord, dictionary: dict[str, str], rad_dictionary: di
         Tuple of (found, lookup_word) where found is True if the word exists
         in the dictionary, and lookup_word is the word that was looked up.
     """
-    from glosilo.eostem import core_to_str
-
     # First try: core + ending (without suffixes)
     # This handles most normal words like "paroli", "kompreni"
-    core_str = core_to_str(cored.core)
-    lookup_word = core_str + cored.preferred_ending if cored.preferred_ending else core_str
+    core_str = stemmer.core_to_str(cored.core)
+    lookup_word = (
+        core_str + cored.preferred_ending if cored.preferred_ending else core_str
+    )
     found = lookup_word in dictionary
 
     if not found:
@@ -86,7 +52,9 @@ def verify_stem(cored: CoredWord, dictionary: dict[str, str], rad_dictionary: di
     # This handles words where the core is a preposition used as a root,
     # like "subigi" (sub+ig+i) or "forigi" (for+ig+i)
     if not found and cored.suffixes:
-        lookup_word_with_suffixes = core_to_str(cored.core) + "".join(cored.suffixes)
+        lookup_word_with_suffixes = stemmer.core_to_str(cored.core) + "".join(
+            cored.suffixes
+        )
         if cored.preferred_ending:
             lookup_word_with_suffixes += cored.preferred_ending
 
@@ -106,14 +74,22 @@ def verify_stem(cored: CoredWord, dictionary: dict[str, str], rad_dictionary: di
         if len(cored.core) == 1 and cored.core[0] in rad_dictionary:
             found = True
             # Keep the original lookup_word for display
-        elif len(cored.core) > 1 and all(part in rad_dictionary for part in cored.core if len(part) > 1):
+        elif len(cored.core) > 1 and all(
+            part in rad_dictionary for part in cored.core if len(part) > 1
+        ):
             found = True
             # Keep the original lookup_word for display
 
     return found, lookup_word
 
 
-def format_cored_word(cored: CoredWord, verify: bool = False, dictionary: dict[str, str] | None = None, rad_dictionary: dict[str, str] | None = None) -> str:
+def format_cored_word(
+    stemmer: eostem.Stemmer,
+    cored: CoredWord,
+    verify: bool = False,
+    dictionary: dict[str, str] | None = None,
+    rad_dictionary: dict[str, str] | None = None,
+) -> str:
     """Format a CoredWord for display as a one-line output.
 
     Format: word = prefix+core+suffix+ending [lookup: word | FOUND/NOT FOUND]
@@ -124,13 +100,11 @@ def format_cored_word(cored: CoredWord, verify: bool = False, dictionary: dict[s
         maltrankviliga = mal+trankvil+ig+i [lookup: trankvili | NOT FOUND]
     """
     # Build the word breakdown
-    from glosilo.eostem import core_display
-
     word_parts: list[str] = []
     if cored.prefixes:
         word_parts.append("+".join(cored.prefixes))
     if cored.core:
-        word_parts.append(core_display(cored.core))
+        word_parts.append(stemmer.core_display(cored.core))
     if cored.suffixes:
         word_parts.append("+".join(cored.suffixes))
     if cored.preferred_ending:
@@ -141,7 +115,7 @@ def format_cored_word(cored: CoredWord, verify: bool = False, dictionary: dict[s
 
     # Add verification result if requested
     if verify and dictionary is not None:
-        found, lookup_word = verify_stem(cored, dictionary, rad_dictionary)
+        found, lookup_word = verify_stem(stemmer, cored, dictionary, rad_dictionary)
         status = "FOUND" if found else "NOT FOUND"
         result += f" [lookup: {lookup_word} | {status}]"
 
@@ -151,19 +125,27 @@ def format_cored_word(cored: CoredWord, verify: bool = False, dictionary: dict[s
 def main() -> None:
     """Main entry point for the stem command."""
     # Ensure UTF-8 encoding for output on Windows
-    if sys.stdout.encoding != 'utf-8':
-        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+    if sys.stdout.encoding != "utf-8":
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
 
     if len(sys.argv) < 2:
-        print("Usage: python -m glosilo.stem [--debug] [--verify] <word> [<word> ...]", file=sys.stderr)
+        print(
+            "Usage: python -m glosilo.stem [--debug] [--verify] <word> [<word> ...]",
+            file=sys.stderr,
+        )
         print("\nOptions:", file=sys.stderr)
         print("  --debug   Show detailed stemming process", file=sys.stderr)
         print("  --verify  Verify stem exists in dictionary", file=sys.stderr)
         print("\nExamples:", file=sys.stderr)
         print("  python -m glosilo.stem parolanto", file=sys.stderr)
-        print("  python -m glosilo.stem parolanto nekompreneble ekdiri", file=sys.stderr)
+        print(
+            "  python -m glosilo.stem parolanto nekompreneble ekdiri", file=sys.stderr
+        )
         print("  python -m glosilo.stem --debug nekompreneble", file=sys.stderr)
-        print("  python -m glosilo.stem --verify maltrankviliga kato lernejo", file=sys.stderr)
+        print(
+            "  python -m glosilo.stem --verify maltrankviliga kato lernejo",
+            file=sys.stderr,
+        )
         print("  python -m glosilo.stem --debug --verify ekdiri", file=sys.stderr)
         sys.exit(1)
 
@@ -184,37 +166,38 @@ def main() -> None:
         print("Error: No word provided", file=sys.stderr)
         sys.exit(1)
 
+    stemmer = eostem.Stemmer()
+
     # Load dictionaries if verification requested
     dictionary: dict[str, str] | None = None
     rad_dictionary: dict[str, str] | None = None
     if verify:
-        dictionary = load_dictionary()
-        if dictionary is None:
-            print(f"Warning: Dictionary not found at {DICTIONARY_PATH}", file=sys.stderr)
-            print("Continuing without verification...\n", file=sys.stderr)
-            verify = False
-
-        rad_dictionary = load_rad_dictionary()
-        if rad_dictionary is None:
-            print(f"Warning: Rad dictionary not found at {RAD_DICTIONARY_PATH}", file=sys.stderr)
+        dictionary = stemmer.get_kap_dictionary()
+        rad_dictionary = stemmer.get_rad_dictionary()
 
     # Stem each word
     for word in words:
-        cored = eostem.core_word(word, debug=debug)
+        cored = stemmer.core_word(word, debug=debug)
 
         # When verifying, only show words that are NOT FOUND
-        if verify and dictionary is not None:
-            found, _ = verify_stem(cored, dictionary, rad_dictionary)
+        if verify:
+            assert dictionary is not None
+            found, _ = verify_stem(stemmer, cored, dictionary, rad_dictionary)
             if found:
                 continue  # Skip words that are found
 
         # Print results
-        if not debug:
-            print(format_cored_word(cored, verify=verify, dictionary=dictionary, rad_dictionary=rad_dictionary))
-        else:
-            # Debug mode already prints detailed info during processing
+        if debug:
             print("\n" + "=" * 50)
-            print(format_cored_word(cored, verify=verify, dictionary=dictionary, rad_dictionary=rad_dictionary))
+        print(
+            format_cored_word(
+                stemmer,
+                cored,
+                verify=verify,
+                dictionary=dictionary,
+                rad_dictionary=rad_dictionary,
+            )
+        )
 
 
 if __name__ == "__main__":
