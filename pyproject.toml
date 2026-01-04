@@ -25,5 +25,10 @@ where = ["src"]
 include = ["glosilo*"]
 namespaces = false
 
+[dependency-groups]
+dev = [
+    "lxml>=6.0.2",
+]
+
 [project.scripts]
 stem = "glosilo.stem:main"

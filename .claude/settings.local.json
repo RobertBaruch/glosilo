@@ -5,7 +5,8 @@
       "Bash(more:*)",
       "Bash(cat:*)",
       "Bash(python -m glosilo.stem:*)",
-      "Bash(python -m pytest:*)"
+      "Bash(python -m pytest:*)",
+      "Bash(ls:*)"
     ]
   }
 }
