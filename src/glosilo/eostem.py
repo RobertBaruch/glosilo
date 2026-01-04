@@ -319,8 +319,13 @@ class Stemmer:
 
                 reconstructed_root = "".join(reconstructed_root_parts)
 
-                # Check if this root is valid
-                if reconstructed_root in rad_dict:
+                # Check if this root is valid, or if it can be split into compound parts
+                compound_parts = None
+                if reconstructed_root not in rad_dict:
+                    # Try compound splitting
+                    compound_parts = self._try_split_compound(reconstructed_root, rad_dict)
+
+                if reconstructed_root in rad_dict or compound_parts:
                     # This is a valid configuration
                     # Prefixes that were stripped: first (len - num_to_keep) prefixes
                     stripped_prefixes = temp_prefixes[
@@ -333,35 +338,44 @@ class Stemmer:
                     if preposition:
                         stripped_prefixes = [preposition] + stripped_prefixes
 
-                    # Special case for "ne": prefer it as a root only if there are no suffixes,
-                    # or the only suffix is "ig" or "ul"
-                    # This makes "neig" and "neul" have "ne" as core, but "neebl" and "neind"
-                    # have "ebl" and "ind" as core
-                    score_penalty = 0
-                    if reconstructed_root == "ne" and stripped_suffixes:
-                        # If "ne" is the core and there are suffixes, check if they're ig/ul only
-                        if len(stripped_suffixes) == 1 and stripped_suffixes[0] in [
-                            "ig",
-                            "ul",
-                        ]:
-                            # Boost this configuration (negative penalty = higher priority)
-                            score_penalty = -1000
-                        else:
-                            # Penalize this configuration to prefer other decompositions
-                            score_penalty = 1000
+                    # Determine core and score
+                    if compound_parts:
+                        # Use compound parts as core
+                        core_to_use = compound_parts
+                        score = sum(len(p) for p in compound_parts if len(p) > 1)
+                        score_penalty = 10  # Small penalty for compounds
+                    else:
+                        # Use reconstructed_root as core
+                        core_to_use = self.make_core(reconstructed_root)
+                        score = len(reconstructed_root)
+                        score_penalty = 0
 
-                    # Also penalize "ig" or "ul" as cores when "ne" is a prefix
-                    if reconstructed_root in ["ig", "ul"] and "ne" in stripped_prefixes:
-                        score_penalty = 1000
+                        # Special case for "ne": prefer it as a root only if there are no suffixes,
+                        # or the only suffix is "ig" or "ul"
+                        # This makes "neig" and "neul" have "ne" as core, but "neebl" and "neind"
+                        # have "ebl" and "ind" as core
+                        if reconstructed_root == "ne" and stripped_suffixes:
+                            # If "ne" is the core and there are suffixes, check if they're ig/ul only
+                            if len(stripped_suffixes) == 1 and stripped_suffixes[0] in [
+                                "ig",
+                                "ul",
+                            ]:
+                                # Boost this configuration (negative penalty = higher priority)
+                                score_penalty = -1000
+                            else:
+                                # Penalize this configuration to prefer other decompositions
+                                score_penalty = 1000
+
+                        # Also penalize "ig" or "ul" as cores when "ne" is a prefix
+                        if reconstructed_root in ["ig", "ul"] and "ne" in stripped_prefixes:
+                            score_penalty = 1000
 
                     deconstructions.append(
                         (
                             stripped_prefixes,
-                            self.make_core(
-                                reconstructed_root
-                            ),  # Convert to list[str] format
+                            core_to_use,
                             stripped_suffixes,
-                            len(reconstructed_root),
+                            score,
                             score_penalty,
                         )
                     )
@@ -385,7 +399,13 @@ class Stemmer:
 
                 reconstructed_root = "".join(reconstructed_root_parts)
 
-                if reconstructed_root in rad_dict:
+                # Check if this root is valid, or if it can be split into compound parts
+                compound_parts = None
+                if reconstructed_root not in rad_dict:
+                    # Try compound splitting
+                    compound_parts = self._try_split_compound(reconstructed_root, rad_dict)
+
+                if reconstructed_root in rad_dict or compound_parts:
                     stripped_prefixes = no_prep_temp_prefixes[
                         : len(no_prep_temp_prefixes) - num_prefixes_to_keep_in_core
                     ]
@@ -393,26 +413,37 @@ class Stemmer:
                         num_suffixes_to_keep_in_core:
                     ]
 
-                    # No preposition in this case
-                    score_penalty = 0
-                    if reconstructed_root == "ne" and stripped_suffixes:
-                        if len(stripped_suffixes) == 1 and stripped_suffixes[0] in [
-                            "ig",
-                            "ul",
-                        ]:
-                            score_penalty = -1000
-                        else:
-                            score_penalty = 1000
+                    # Determine core and score
+                    if compound_parts:
+                        # Use compound parts as core
+                        core_to_use = compound_parts
+                        score = sum(len(p) for p in compound_parts if len(p) > 1)
+                        score_penalty = 10  # Small penalty for compounds
+                    else:
+                        # Use reconstructed_root as core
+                        core_to_use = self.make_core(reconstructed_root)
+                        score = len(reconstructed_root)
+                        score_penalty = 0
 
-                    if reconstructed_root in ["ig", "ul"] and "ne" in stripped_prefixes:
-                        score_penalty = 1000
+                        # No preposition in this case
+                        if reconstructed_root == "ne" and stripped_suffixes:
+                            if len(stripped_suffixes) == 1 and stripped_suffixes[0] in [
+                                "ig",
+                                "ul",
+                            ]:
+                                score_penalty = -1000
+                            else:
+                                score_penalty = 1000
+
+                        if reconstructed_root in ["ig", "ul"] and "ne" in stripped_prefixes:
+                            score_penalty = 1000
 
                     deconstructions.append(
                         (
                             stripped_prefixes,
-                            self.make_core(reconstructed_root),
+                            core_to_use,
                             stripped_suffixes,
-                            len(reconstructed_root),
+                            score,
                             score_penalty,
                         )
                     )

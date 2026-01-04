@@ -156,6 +156,30 @@ def lookup_word_definitions(
             result["definitions"] = {core_word: {lookup_word: senses[lookup_word]}}
             return result
 
+    # Strategy 2.5: Try progressively stripping suffixes
+    # For words like "ĉirkaŭparolado" (ĉirkaŭ+parol+ad+o), try:
+    # - ĉirkaŭparolad + endings (fails)
+    # - ĉirkaŭparol + endings (should find "ĉirkaŭparoli")
+    if cored.suffixes:
+        # Try removing suffixes one at a time from the end
+        for i in range(len(cored.suffixes) - 1, -1, -1):
+            # Reconstruct with fewer suffixes
+            partial_suffixes = cored.suffixes[:i]
+            partial_base = "".join(cored.prefixes) + "".join(cored.core) + "".join(partial_suffixes)
+
+            lookup_word, article_id = try_lookup_with_endings(partial_base, kap_dict)
+            if lookup_word and article_id:
+                senses = load_senses_from_xml(article_id)
+                if lookup_word in senses:
+                    result["found"] = True
+                    result["lookup_method"] = "suffix_stripped"
+                    result["lookup_word"] = lookup_word
+                    result["article_id"] = article_id
+                    # Use consistent structure: core -> {lookup_word -> definitions}
+                    core_word = cored.core[0] if len(cored.core) == 1 else "|".join(cored.core)
+                    result["definitions"] = {core_word: {lookup_word: senses[lookup_word]}}
+                    return result
+
     # Strategy 3: Try looking up cores
     # For compound words, we have multiple cores
     core_definitions: dict[str, dict[str, dict[str, str]]] = {}
