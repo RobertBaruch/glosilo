@@ -19,6 +19,9 @@ import gensenses
 from glosilo import eostem
 from glosilo.structs import CoredWord
 
+KAP_DICTIONARY_FILE = "kap_dictionary.json"
+DEFAULT_REVO_FONTO_DIR = "F:/revo-fonto/revo/"
+
 
 def load_kap_dictionary() -> dict[str, str]:
     """Load the kap_dictionary.json from retavortaropy.
@@ -26,7 +29,7 @@ def load_kap_dictionary() -> dict[str, str]:
     Returns:
         Dictionary mapping kap text to article identifiers
     """
-    kap_dict_path = pathlib.Path("F:/retavortaropy/kap_dictionary.json")
+    kap_dict_path = pathlib.Path(KAP_DICTIONARY_FILE)
     if not kap_dict_path.exists():
         return {}
 
@@ -43,7 +46,7 @@ def load_senses_from_xml(article_id: str) -> dict[str, dict[str, str]]:
     Returns:
         Dictionary mapping kap text to sense dictionaries
     """
-    xml_path = pathlib.Path(f"F:/revo-fonto/revo/{article_id}.xml")
+    xml_path = pathlib.Path(DEFAULT_REVO_FONTO_DIR).joinpath(f"{article_id}.xml")
     if not xml_path.exists():
         return {}
 
