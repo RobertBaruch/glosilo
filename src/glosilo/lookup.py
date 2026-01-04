@@ -134,7 +134,10 @@ def lookup_word_definitions(
             result["lookup_method"] = "exact"
             result["lookup_word"] = word
             result["article_id"] = article_id
-            result["definitions"] = senses[word]
+            # Use consistent structure: core -> {lookup_word -> definitions}
+            # For non-compound words, core is single element
+            core_word = cored.core[0] if len(cored.core) == 1 else word
+            result["definitions"] = {core_word: {word: senses[word]}}
             return result
 
     # Strategy 2: Try word with different endings
@@ -146,12 +149,14 @@ def lookup_word_definitions(
             result["lookup_method"] = "with_ending"
             result["lookup_word"] = lookup_word
             result["article_id"] = article_id
-            result["definitions"] = senses[lookup_word]
+            # Use consistent structure: core -> {lookup_word -> definitions}
+            core_word = cored.core[0] if len(cored.core) == 1 else word
+            result["definitions"] = {core_word: {lookup_word: senses[lookup_word]}}
             return result
 
     # Strategy 3: Try looking up cores
     # For compound words, we have multiple cores
-    core_definitions: dict[str, dict[str, str]] = {}
+    core_definitions: dict[str, dict[str, dict[str, str]]] = {}
 
     for core_part in cored.core:
         # Skip single-letter linking vowels
@@ -160,12 +165,23 @@ def lookup_word_definitions(
 
         # Check if core is in rad_dict
         if core_part in rad_dict:
-            # Try to find this core with common endings
+            # First, try with the preferred ending from the original word
+            core_with_ending = core_part + cored.preferred_ending
+            if core_with_ending in kap_dict:
+                article_id = kap_dict[core_with_ending]
+                senses = load_senses_from_xml(article_id)
+                if core_with_ending in senses:
+                    # Structure: core -> {lookup_word -> {sense_num -> definition}}
+                    core_definitions[core_part] = {core_with_ending: senses[core_with_ending]}
+                    continue
+
+            # If not found with preferred ending, try other endings
             core_lookup, core_article_id = try_lookup_with_endings(core_part, kap_dict)
             if core_lookup and core_article_id:
                 senses = load_senses_from_xml(core_article_id)
                 if core_lookup in senses:
-                    core_definitions[core_part] = senses[core_lookup]
+                    # Structure: core -> {lookup_word -> {sense_num -> definition}}
+                    core_definitions[core_part] = {core_lookup: senses[core_lookup]}
 
     if core_definitions:
         result["found"] = True
