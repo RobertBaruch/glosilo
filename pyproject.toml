@@ -17,6 +17,7 @@ classifiers = [
 requires-python = ">=3.13"
 license = {text="Apache License, Version 2.0"}
 dependencies = [
+    "fastmcp>=2.14.2",
     "jsonpath-ng>=1.7.0",
     "lxml>=6.0.2",
     "tqdm>=4.67.1",
@@ -32,6 +33,7 @@ namespaces = false
 
 [dependency-groups]
 dev = [
+    "pytest>=9.0.2",
     "types-lxml>=2026.1.1",
     "types-tqdm>=4.67.0.20250809",
 ]

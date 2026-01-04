@@ -13,6 +13,7 @@ import io
 import json
 import pathlib
 import string
+from dataclasses import dataclass
 from typing import Any
 
 import gensenses
@@ -21,6 +22,75 @@ from glosilo.structs import CoredWord
 
 KAP_DICTIONARY_FILE = "kap_dictionary.json"
 DEFAULT_REVO_FONTO_DIR = "F:/revo-fonto/revo/"
+
+
+@dataclass
+class Definition:
+    """Definition data for a single word or core morpheme.
+
+    Attributes:
+        core_word: The core morpheme (e.g., 'parol')
+        lookup_word: The word form found in dictionary (e.g., 'paroli')
+        senses: Dictionary mapping sense numbers to definition text
+                Example: {'1': 'to speak', '2': 'to talk'}
+    """
+    core_word: str
+    lookup_word: str
+    senses: dict[str, str]
+
+
+@dataclass
+class LookupResult:
+    """Result of looking up word definitions.
+
+    Corresponds to the output of lookup_word_definitions().
+
+    Attributes:
+        found: Whether definitions were found
+        lookup_method: Method used to find definitions ('exact', 'with_ending', 'suffix_stripped', 'core', or None)
+        lookup_word: The word form that was found in the dictionary (or compound core representation)
+        article_id: The ReVo article identifier (e.g., 'parol', 'kompren')
+        definitions: List of definitions (one per core morpheme for compound words)
+    """
+    found: bool
+    lookup_method: str | None
+    lookup_word: str | None
+    article_id: str | None
+    definitions: list[Definition]
+
+
+@dataclass
+class Result:
+    """Complete word analysis result with definitions.
+
+    Corresponds to the output of lookup_words() for each word.
+
+    Attributes:
+        word: The original word being analyzed
+        prefixes: List of identified prefixes
+        core: List of core morphemes (multiple for compound words)
+        suffixes: List of identified suffixes
+        ending: The grammatical ending
+        lookup: The lookup result containing definitions
+    """
+    word: str
+    prefixes: list[str]
+    core: list[str]
+    suffixes: list[str]
+    ending: str
+    lookup: LookupResult
+
+
+@dataclass
+class Results:
+    """Collection of word analysis results.
+
+    Wrapper for multiple Result objects from analyzing multiple words.
+
+    Attributes:
+        results: List of Result objects, one per analyzed word
+    """
+    results: list[Result]
 
 
 def load_kap_dictionary() -> dict[str, str]:
@@ -251,38 +321,19 @@ def lookup_word_to_dict(
 
     return result
 
+def lookup_words(words: str) -> list[dict[str, Any]]:
+    _words: list[str] = []
 
-def main() -> None:
-    """Main entry point for the lookup command."""
-    # Ensure UTF-8 encoding for output on Windows
-    if sys.stdout.encoding != "utf-8":
-        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
+    # Split the argument into words and strip punctuation
+    # This allows quoted strings like "unu du tri, kvar?"
+    for token in words.split():
+        # Remove punctuation from the token
+        word = token.strip(string.punctuation)
+        if word:  # Only add non-empty words
+            _words.append(word)
 
-    if len(sys.argv) < 2:
-        print(
-            "Usage: python -m glosilo.lookup <word> [<word> ...]",
-            file=sys.stderr,
-        )
-        print("\nExamples:", file=sys.stderr)
-        print("  python -m glosilo.lookup parolanto", file=sys.stderr)
-        print('  python -m glosilo.lookup "unu du bonfaras, kie?"', file=sys.stderr)
-        sys.exit(1)
-
-    words: list[str] = []
-
-    # Parse arguments
-    for arg in sys.argv[1:]:
-        # Split the argument into words and strip punctuation
-        # This allows quoted strings like "unu du tri, kvar?"
-        for token in arg.split():
-            # Remove punctuation from the token
-            word = token.strip(string.punctuation)
-            if word:  # Only add non-empty words
-                words.append(word)
-
-    if not words:
-        print("Error: No word provided", file=sys.stderr)
-        sys.exit(1)
+    if not _words:
+        return []
 
     # Initialize stemmer
     stemmer = eostem.Stemmer()
@@ -293,13 +344,83 @@ def main() -> None:
 
     # Look up each word
     results: list[dict[str, Any]] = []
-    for word in words:
+    for word in _words:
         word_result = lookup_word_to_dict(stemmer, word, kap_dict, rad_dict)
         results.append(word_result)
 
-    # Output JSON
-    print(json.dumps(results, ensure_ascii=False, indent=2))
+    return results
 
+
+def convert_to_results(lookup_data: list[dict[str, Any]]) -> Results:
+    """Convert lookup_words output to a Results dataclass.
+
+    Args:
+        lookup_data: Output from lookup_words() function
+
+    Returns:
+        Results dataclass instance containing list of Result objects
+    """
+    result_list: list[Result] = []
+
+    for item in lookup_data:
+        # Extract lookup data
+        lookup_dict = item["lookup"]
+
+        # Convert definitions from nested dict to list of Definition objects
+        definitions: list[Definition] = []
+        defs_dict = lookup_dict["definitions"]
+
+        # Iterate through the nested structure: core -> lookup_word -> senses
+        for core_word, lookup_words_dict in defs_dict.items():
+            for lookup_word, senses in lookup_words_dict.items():
+                definitions.append(
+                    Definition(
+                        core_word=core_word,
+                        lookup_word=lookup_word,
+                        senses=senses
+                    )
+                )
+
+        # Create LookupResult
+        lookup_result = LookupResult(
+            found=lookup_dict["found"],
+            lookup_method=lookup_dict["lookup_method"],
+            lookup_word=lookup_dict["lookup_word"],
+            article_id=lookup_dict["article_id"],
+            definitions=definitions
+        )
+
+        # Create Result
+        result = Result(
+            word=item["word"],
+            prefixes=item["prefixes"],
+            core=item["core"],
+            suffixes=item["suffixes"],
+            ending=item["ending"],
+            lookup=lookup_result
+        )
+
+        result_list.append(result)
+
+    return Results(results=result_list)
+
+def main() -> None:
+    """Main entry point for the lookup command."""
+    # Ensure UTF-8 encoding for output on Windows
+    if sys.stdout.encoding != "utf-8":
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
+
+    if len(sys.argv) != 2:
+        print(
+            "Usage: python -m glosilo.lookup <words>",
+            file=sys.stderr,
+        )
+        print("\nExamples:", file=sys.stderr)
+        print("  python -m glosilo.lookup parolanto", file=sys.stderr)
+        print('  python -m glosilo.lookup "unu du bonfaras, kie?"', file=sys.stderr)
+        sys.exit(1)
+
+    print(json.dumps(lookup_words(sys.argv[1]), ensure_ascii=False, indent=2))
 
 if __name__ == "__main__":
     main()
