@@ -5,10 +5,12 @@ Usage:
     python -m glosilo.stem --debug <word>
     python -m glosilo.stem --verify <word>
     python -m glosilo.stem --verify "sentence with multiple words"
+    python -m glosilo.stem --json <word> [<word> ...]
 """
 
 import sys
 import io
+import json
 import string
 from glosilo import eostem
 from glosilo.structs import CoredWord
@@ -85,6 +87,44 @@ def verify_stem(
     return found, lookup_word
 
 
+def cored_word_to_dict(
+    stemmer: eostem.Stemmer,
+    cored: CoredWord,
+    verify: bool = False,
+    dictionary: dict[str, str] | None = None,
+    rad_dictionary: dict[str, str] | None = None,
+) -> dict[str, str | list[str] | dict[str, str | bool]]:
+    """Convert a CoredWord to a dictionary for JSON serialization.
+
+    Args:
+        stemmer: The Stemmer instance
+        cored: The cored word to convert
+        verify: Whether to include verification information
+        dictionary: Dictionary for verification
+        rad_dictionary: Rad dictionary for verification
+
+    Returns:
+        Dictionary with word analysis
+    """
+    result: dict[str, str | list[str] | dict[str, str | bool]] = {
+        "word": cored.orig_word,
+        "prefixes": cored.prefixes,
+        "core": cored.core,
+        "suffixes": cored.suffixes,
+        "ending": cored.preferred_ending,
+    }
+
+    # Add verification result if requested
+    if verify and dictionary is not None:
+        found, lookup_word = verify_stem(stemmer, cored, dictionary, rad_dictionary)
+        result["verification"] = {
+            "found": found,
+            "lookup_word": lookup_word,
+        }
+
+    return result
+
+
 def format_cored_word(
     stemmer: eostem.Stemmer,
     cored: CoredWord,
@@ -132,12 +172,13 @@ def main() -> None:
 
     if len(sys.argv) < 2:
         print(
-            "Usage: python -m glosilo.stem [--debug] [--verify] <word> [<word> ...]",
+            "Usage: python -m glosilo.stem [--debug] [--verify] [--json] <word> [<word> ...]",
             file=sys.stderr,
         )
         print("\nOptions:", file=sys.stderr)
         print("  --debug   Show detailed stemming process", file=sys.stderr)
         print("  --verify  Verify stem exists in dictionary", file=sys.stderr)
+        print("  --json    Output results as JSON", file=sys.stderr)
         print("\nExamples:", file=sys.stderr)
         print("  python -m glosilo.stem parolanto", file=sys.stderr)
         print(
@@ -153,10 +194,15 @@ def main() -> None:
             '  python -m glosilo.stem --verify "unu du bonfaras, kie?"',
             file=sys.stderr,
         )
+        print(
+            '  python -m glosilo.stem --json "parolanto nekompreneble"',
+            file=sys.stderr,
+        )
         sys.exit(1)
 
     debug: bool = False
     verify: bool = False
+    json_output: bool = False
     words: list[str] = []
 
     # Parse arguments
@@ -165,6 +211,8 @@ def main() -> None:
             debug = True
         elif arg == "--verify":
             verify = True
+        elif arg == "--json":
+            json_output = True
         else:
             # Split the argument into words and strip punctuation
             # This allows quoted strings like "unu du tri, kvar?"
@@ -188,28 +236,55 @@ def main() -> None:
         rad_dictionary = stemmer.get_rad_dictionary()
 
     # Stem each word
-    for word in words:
-        cored = stemmer.core_word(word, debug=debug)
+    if json_output:
+        # JSON output mode: collect all results and output as array
+        results: list[dict[str, str | list[str] | dict[str, str | bool]]] = []
+        for word in words:
+            cored = stemmer.core_word(word, debug=False)  # No debug in JSON mode
 
-        # When verifying, only show words that are NOT FOUND
-        if verify:
-            assert dictionary is not None
-            found, _ = verify_stem(stemmer, cored, dictionary, rad_dictionary)
-            if found:
-                continue  # Skip words that are found
+            # When verifying, only include words that are NOT FOUND
+            if verify:
+                assert dictionary is not None
+                found, _ = verify_stem(stemmer, cored, dictionary, rad_dictionary)
+                if found:
+                    continue  # Skip words that are found
 
-        # Print results
-        if debug:
-            print("\n" + "=" * 50)
-        print(
-            format_cored_word(
-                stemmer,
-                cored,
-                verify=verify,
-                dictionary=dictionary,
-                rad_dictionary=rad_dictionary,
+            results.append(
+                cored_word_to_dict(
+                    stemmer,
+                    cored,
+                    verify=verify,
+                    dictionary=dictionary,
+                    rad_dictionary=rad_dictionary,
+                )
             )
-        )
+
+        # Output JSON with no other text
+        print(json.dumps(results, ensure_ascii=False, indent=2))
+    else:
+        # Normal text output mode
+        for word in words:
+            cored = stemmer.core_word(word, debug=debug)
+
+            # When verifying, only show words that are NOT FOUND
+            if verify:
+                assert dictionary is not None
+                found, _ = verify_stem(stemmer, cored, dictionary, rad_dictionary)
+                if found:
+                    continue  # Skip words that are found
+
+            # Print results
+            if debug:
+                print("\n" + "=" * 50)
+            print(
+                format_cored_word(
+                    stemmer,
+                    cored,
+                    verify=verify,
+                    dictionary=dictionary,
+                    rad_dictionary=rad_dictionary,
+                )
+            )
 
 
 if __name__ == "__main__":
