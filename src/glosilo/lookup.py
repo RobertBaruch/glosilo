@@ -140,8 +140,10 @@ def lookup_word_definitions(
             result["definitions"] = {core_word: {word: senses[word]}}
             return result
 
-    # Strategy 2: Try word with different endings
-    lookup_word, article_id = try_lookup_with_endings(word, kap_dict)
+    # Strategy 2: Try reconstructed word with different endings
+    # Reconstruct: prefixes + core + suffixes (without ending)
+    base_word = "".join(cored.prefixes) + "".join(cored.core) + "".join(cored.suffixes)
+    lookup_word, article_id = try_lookup_with_endings(base_word, kap_dict)
     if lookup_word and article_id:
         senses = load_senses_from_xml(article_id)
         if lookup_word in senses:
@@ -150,7 +152,7 @@ def lookup_word_definitions(
             result["lookup_word"] = lookup_word
             result["article_id"] = article_id
             # Use consistent structure: core -> {lookup_word -> definitions}
-            core_word = cored.core[0] if len(cored.core) == 1 else word
+            core_word = cored.core[0] if len(cored.core) == 1 else "|".join(cored.core)
             result["definitions"] = {core_word: {lookup_word: senses[lookup_word]}}
             return result
 
