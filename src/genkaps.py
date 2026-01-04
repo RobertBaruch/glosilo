@@ -4,6 +4,8 @@ Creates a dictionary mapping kap text to XML file paths.
 Handles variants by expanding them into separate kap entries.
 """
 
+# pylint: disable=c-extension-no-member
+
 import argparse
 import json
 import pathlib
@@ -12,7 +14,7 @@ from typing import Any
 
 from jsonpath_ng import parse
 from lxml import etree
-from lxml.sax import saxify
+from lxml.sax import saxify  # pylint: disable=no-name-in-module
 from tqdm import tqdm
 
 from glosilo.retavortaropy.xmlparse import DTDResolver, RevoContentHandler

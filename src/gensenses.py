@@ -3,14 +3,18 @@ Command line tool to extract sense definitions (dif) from drv and subdrv element
 Creates a dictionary mapping kap text to sense dictionaries.
 """
 
+# pylint: disable=c-extension-no-member
+
 import argparse
+import io
 import json
 import pathlib
-from typing import Any
+import sys
+from typing import cast, Any
 
 from jsonpath_ng import parse
 from lxml import etree
-from lxml.sax import saxify
+from lxml.sax import saxify  # pylint: disable=no-name-in-module
 from tqdm import tqdm
 
 from glosilo.retavortaropy.xmlparse import DTDResolver, RevoContentHandler
@@ -156,6 +160,7 @@ def process_snc_list(
         if "snc" in item or "subsnc" in item:
             snc_count += 1
             snc_data = item.get("snc") or item.get("subsnc")
+            assert snc_data is not None
 
             # Determine the sense number
             if base_num:
@@ -173,7 +178,7 @@ def process_snc_list(
                         if dif_text:
                             result[sense_num] = dif_text
                         break
-                    elif "refgrp" in content_item:
+                    if "refgrp" in content_item:
                         # Check if this is a refgrp with tip="dif"
                         refgrp_data = content_item["refgrp"]
                         if refgrp_data.get("tip") == "dif":
@@ -185,7 +190,7 @@ def process_snc_list(
                             if dif_text:
                                 result[sense_num] = dif_text
                             break
-                    elif "ref" in content_item:
+                    if "ref" in content_item:
                         # Check if this is a ref with tip="dif"
                         ref_data = content_item["ref"]
                         if ref_data.get("tip") == "dif":
@@ -375,10 +380,7 @@ def main() -> None:
         print(f"Results written to {output_path}")
     else:
         # Write to console with UTF-8 encoding - no other output
-        import sys
-
-        # Reconfigure stdout to use UTF-8 encoding
-        sys.stdout.reconfigure(encoding="utf-8")
+        cast(io.TextIOWrapper, sys.stdout).reconfigure(encoding="utf-8")
         json.dump(all_senses, sys.stdout, ensure_ascii=False, indent=2)
 
 

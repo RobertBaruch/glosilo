@@ -4,13 +4,15 @@ Creates a dictionary mapping rad text to XML file paths.
 Includes both base rads and variant rads.
 """
 
+# pylint: disable=c-extension-no-member
+
 import argparse
 import json
 import pathlib
 from typing import Any
 
 from lxml import etree
-from lxml.sax import saxify
+from lxml.sax import saxify  # pylint: disable=no-name-in-module
 from tqdm import tqdm
 
 from glosilo.retavortaropy.xmlparse import DTDResolver, RevoContentHandler
@@ -27,7 +29,7 @@ def get_rads_from_art(root_dict: dict[str, Any]) -> list[str]:
     Returns:
         List of rad texts (base rad + any variant rads)
     """
-    rads = []
+    rads: list[str] = []
 
     try:
         vortaro = root_dict.get("vortaro", {})
@@ -79,7 +81,7 @@ def process_file(xml_path: pathlib.Path, parser: etree.XMLParser) -> dict[str, s
     Returns:
         Dictionary mapping rad texts to file path
     """
-    rad_to_file = {}
+    rad_to_file: dict[str, str] = {}
 
     try:
         with open(xml_path, "r", encoding="UTF-8") as f:
@@ -141,8 +143,8 @@ def main() -> None:
     xml_parser.resolvers.add(DTDResolver())
 
     # Dictionary to store all rad -> file mappings
-    all_rads = {}
-    files_without_rad = []
+    all_rads: dict[str, str] = {}
+    files_without_rad: list[str] = []
 
     for xml_file in tqdm(xml_files, desc="Processing XML files", unit="file"):
         file_rads = process_file(xml_file, xml_parser)

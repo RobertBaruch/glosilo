@@ -33,6 +33,7 @@ namespaces = false
 [dependency-groups]
 dev = [
     "types-lxml>=2026.1.1",
+    "types-tqdm>=4.67.0.20250809",
 ]
 
 [project.scripts]
@@ -40,5 +41,7 @@ stem = "glosilo.stem:main"
 
 [tool.mypy]
 plugins = ["mypy_plugin_lxml.main"]
+mypy_path = "$MYPY_CONFIG_FILE_DIR/src,$MYPY_CONFIG_FILE_DIR/stubs"
+explicit_package_bases = true
 
 [tool.black]

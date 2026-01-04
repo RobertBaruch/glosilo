@@ -13,12 +13,10 @@ import io
 import json
 import pathlib
 import string
+import subprocess
 from typing import Any
 from glosilo import eostem
 from glosilo.structs import CoredWord
-
-# Subprocess approach to call gensenses.py with system Python
-import subprocess
 
 
 def load_kap_dictionary() -> dict[str, str]:
