@@ -13,8 +13,9 @@ import io
 import json
 import pathlib
 import string
-import subprocess
 from typing import Any
+
+import gensenses
 from glosilo import eostem
 from glosilo.structs import CoredWord
 
@@ -47,26 +48,7 @@ def load_senses_from_xml(article_id: str) -> dict[str, dict[str, str]]:
         return {}
 
     try:
-        # Call gensenses.py with retavortaropy's venv Python to generate senses
-        result = subprocess.run(
-            [
-                "F:/retavortaropy/.venv/Scripts/python.exe",
-                "F:/retavortaropy/gensenses.py",
-                str(xml_path),
-            ],
-            capture_output=True,
-            text=True,
-            timeout=10,
-            encoding="utf-8",
-        )
-
-        if result.returncode == 0:
-            # Parse the JSON output
-            senses_data: dict[str, dict[str, str]] = json.loads(result.stdout)
-            return senses_data
-        else:
-            return {}
-
+        return gensenses.json_lookup(xml_path)
     except Exception:
         # Return empty dict on error
         return {}
@@ -127,6 +109,8 @@ def lookup_word_definitions(
         "definitions": {},
     }
 
+    article_id: str | None = None
+
     # Strategy 1: Try exact word match
     if word in kap_dict:
         article_id = kap_dict[word]
@@ -154,7 +138,7 @@ def lookup_word_definitions(
             result["lookup_word"] = lookup_word
             result["article_id"] = article_id
             # Use consistent structure: core -> {lookup_word -> definitions}
-            core_word = cored.core[0] if len(cored.core) == 1 else "|".join(cored.core)
+            core_word = "|".join(cored.core)
             result["definitions"] = {core_word: {lookup_word: senses[lookup_word]}}
             return result
 
@@ -182,9 +166,7 @@ def lookup_word_definitions(
                     result["lookup_word"] = lookup_word
                     result["article_id"] = article_id
                     # Use consistent structure: core -> {lookup_word -> definitions}
-                    core_word = (
-                        cored.core[0] if len(cored.core) == 1 else "|".join(cored.core)
-                    )
+                    core_word = "|".join(cored.core)
                     result["definitions"] = {
                         core_word: {lookup_word: senses[lookup_word]}
                     }

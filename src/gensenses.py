@@ -316,16 +316,46 @@ def process_file(
 
     return drv_senses
 
+def json_lookup(input_path: pathlib.Path) -> dict[str, dict[str, str]]:
+    if not input_path.exists():
+        raise ValueError(f"Error: Path {input_path} not found.")
+
+    # Check if it's a file or directory
+    if input_path.is_file():
+        xml_files = [input_path]
+    elif input_path.is_dir():
+        xml_files = list(input_path.glob("*.xml"))
+    else:
+        raise ValueError(f"Error: {input_path} is neither a file nor a directory.")
+
+    if not xml_files:
+        raise ValueError(f"No XML files found in {input_path}")
+
+    # Initialize parser once
+    xml_parser = etree.XMLParser(load_dtd=True, resolve_entities=True)
+    xml_parser.resolvers.add(DTDResolver())
+
+    # Dictionary to store all kap -> sense mappings
+    all_senses: dict[str, dict[str, str]] = {}
+    for xml_file in xml_files:
+        file_senses = process_file(xml_file, xml_parser)
+        all_senses.update(file_senses)
+
+    return all_senses
 
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="Extract sense definitions from Revo XML files."
     )
     parser.add_argument(
-        "path",
-        nargs="?",
+        "--dir",
         default="f:/revo-fonto/revo",
-        help="Directory containing XML files or single XML file",
+        help="Directory containing XML files",
+    )
+    parser.add_argument(
+        "--path",
+        default=None,
+        help="Single XML file",
     )
     parser.add_argument(
         "-o",
@@ -335,7 +365,20 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    input_path = pathlib.Path(args.path)
+    input_path = pathlib.Path(args.dir)
+    if args.path is not None:
+        file = pathlib.Path(args.path)
+        if file.is_absolute():
+            input_path = file
+        else:
+            input_path = input_path.joinpath(file)
+
+    if not args.output:
+        # Write to console with UTF-8 encoding - no other output
+        cast(io.TextIOWrapper, sys.stdout).reconfigure(encoding="utf-8")
+        json.dump(json_lookup(input_path), sys.stdout, ensure_ascii=False, indent=2)
+        return
+
     if not input_path.exists():
         print(f"Error: Path {input_path} not found.")
         return
@@ -360,28 +403,15 @@ def main() -> None:
     # Dictionary to store all kap -> sense mappings
     all_senses: dict[str, dict[str, str]] = {}
 
-    # Use tqdm only when writing to a file
-    if args.output:
-        for xml_file in tqdm(xml_files, desc="Processing XML files", unit="file"):
-            file_senses = process_file(xml_file, xml_parser)
-            all_senses.update(file_senses)
-    else:
-        # No progress bar when writing to console
-        for xml_file in xml_files:
-            file_senses = process_file(xml_file, xml_parser)
-            all_senses.update(file_senses)
+    for xml_file in tqdm(xml_files, desc="Processing XML files", unit="file"):
+        file_senses = process_file(xml_file, xml_parser)
+        all_senses.update(file_senses)
 
-    # Write results to output file or console
-    if args.output:
-        output_path = pathlib.Path(args.output)
-        with open(output_path, "w", encoding="UTF-8") as f:
-            json.dump(all_senses, f, ensure_ascii=False, indent=2)
-        print(f"\nExtracted senses for {len(all_senses)} kap entries")
-        print(f"Results written to {output_path}")
-    else:
-        # Write to console with UTF-8 encoding - no other output
-        cast(io.TextIOWrapper, sys.stdout).reconfigure(encoding="utf-8")
-        json.dump(all_senses, sys.stdout, ensure_ascii=False, indent=2)
+    output_path = pathlib.Path(args.output)
+    with open(output_path, "w", encoding="UTF-8") as f:
+        json.dump(all_senses, f, ensure_ascii=False, indent=2)
+    print(f"\nExtracted senses for {len(all_senses)} kap entries")
+    print(f"Results written to {output_path}")
 
 
 if __name__ == "__main__":
