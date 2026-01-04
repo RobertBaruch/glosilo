@@ -26,6 +26,7 @@ OUTFILE = "gloss1.tex"
 
 class Glosser:
     """Glosses a wordpile."""
+
     dictionary: Dictionary
     difficult: dict[str, str]
     names: dict[str, str]
@@ -90,6 +91,7 @@ class Glosser:
             print(line, file=fout)
 
         print("\\endgl%\n", file=fout)
+
 
 def words_to_gloss(words: str) -> Iterable[str]:
     """Yields individual words to gloss."""
@@ -224,6 +226,7 @@ def adjust_gloss(glosser: Glosser, g: structs.CoredWord) -> structs.CoredWord:
 
     return g
 
+
 def hyphenated_gloss(glosser: Glosser, g: structs.CoredWord) -> str:
     """Returns a formatted gloss for a hyphenated word."""
     if DEBUG:
@@ -233,12 +236,11 @@ def hyphenated_gloss(glosser: Glosser, g: structs.CoredWord) -> str:
     if "???" in definition:
         print(g)
 
-    if not g.preferred_definition or (
-        g.core_definition == g.preferred_definition
-    ):
+    if not g.preferred_definition or (g.core_definition == g.preferred_definition):
         return f"{g.orig_word}[{definition}]"
     preferred_definition = g.preferred_definition.replace("-", " ")
     return f"{g.orig_word}[{definition}/{preferred_definition}]"
+
 
 def core_gloss(glosser: Glosser, g: structs.CoredWord) -> str:
     """Returns a formatted core."""
@@ -250,11 +252,10 @@ def core_gloss(glosser: Glosser, g: structs.CoredWord) -> str:
     if definition and suffix_list:
         definition = f"{definition}+{{\\sc {suffix_list}}}"
     if definition and g.prefixes:
-        prefix_list = "-".join(
-            consts.PREFIXES[prefix].lower() for prefix in g.prefixes
-        )
+        prefix_list = "-".join(consts.PREFIXES[prefix].lower() for prefix in g.prefixes)
         definition = f"{{\\sc {prefix_list}}}+{definition}"
     return definition
+
 
 def single_part_gloss(glosser: Glosser, g: structs.CoredWord) -> str:
     """Returns a formatted gloss for a single part."""
@@ -268,9 +269,7 @@ def single_part_gloss(glosser: Glosser, g: structs.CoredWord) -> str:
     # if g.preferred_definition == "???":
     #     return f"{g.orig_word}[???]"
 
-    if not g.preferred_definition or (
-        g.core_definition == g.preferred_definition
-    ):
+    if not g.preferred_definition or (g.core_definition == g.preferred_definition):
         return f"{g.orig_word}[{definition}]"
     preferred_definition = g.preferred_definition.replace("-", " ")
     return f"{g.orig_word}[{definition}/{preferred_definition}]"
@@ -284,7 +283,7 @@ def run() -> None:
     if not words:
         with open(WORDFILE, "r", encoding="utf-8") as infile:
             words = infile.read()
-    words = unicodedata.normalize('NFC', words)
+    words = unicodedata.normalize("NFC", words)
     words = words.replace("\\-", "")
     paragraphs = words.split("\n\n")
     with open(OUTFILE, "w", encoding="utf-8") as outfile:

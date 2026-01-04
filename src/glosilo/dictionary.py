@@ -65,7 +65,9 @@ class Dictionary:
             if analysis.preferred_ending not in consts.ENDING_ALTERNATIVES:
                 analysis.core_definition = analysis.preferred_definition
                 if word == self.debug_word:
-                    print(f"  No ending alternatives for {word}; new analysis {analysis}")
+                    print(
+                        f"  No ending alternatives for {word}; new analysis {analysis}"
+                    )
                 continue
 
             # For cores that are vortetoj, we just use the preferred
@@ -81,7 +83,9 @@ class Dictionary:
             ):
                 analysis.core_definition = self.words[core_str].preferred_definition
                 if word == self.debug_word:
-                    print(f"  Vorteto core {core_str} for {word}; new analysis {analysis}")
+                    print(
+                        f"  Vorteto core {core_str} for {word}; new analysis {analysis}"
+                    )
                 continue
 
             for ending in [analysis.preferred_ending] + consts.ENDING_ALTERNATIVES[
@@ -93,12 +97,16 @@ class Dictionary:
                 if root in self.words:
                     analysis.core_definition = self.words[root].preferred_definition
                     if word == self.debug_word:
-                        print(f"  Found core definition for {word}; new analysis {analysis}")
+                        print(
+                            f"  Found core definition for {word}; new analysis {analysis}"
+                        )
                     break
 
             if root not in self.words:
                 if word == self.debug_word:
-                    print(f"  No core definition found for {word}; new analysis {analysis}")
+                    print(
+                        f"  No core definition found for {word}; new analysis {analysis}"
+                    )
                 analysis.core_definition = "???"
 
     def _read_word_files(self) -> None:
@@ -188,7 +196,9 @@ class Dictionary:
             if analysis.preferred_definition != "???":
                 return analysis
 
-        return structs.CoredWord(cored_word.orig_word, [], [""], [], "", [], "???", "???")
+        return structs.CoredWord(
+            cored_word.orig_word, [], [""], [], "", [], "???", "???"
+        )
 
     def _get_saved_gloss(self, word: str) -> structs.CoredWord:
         analysis = self.words.get(
@@ -306,7 +316,7 @@ class Dictionary:
                 )
             # If the word doesn't end in a standard Esperanto ending (u has already
             # been converted to i), then don't reanalyze.
-            #if word[-1] in ["a", "e", "i", "o"]:
+            # if word[-1] in ["a", "e", "i", "o"]:
             analysis = self._reanalyze(word)
         analysis = copy.copy(analysis)
         analysis.orig_word = orig_word

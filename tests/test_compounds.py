@@ -1,4 +1,5 @@
 """Unit tests for compound word splitting."""
+
 import pytest
 from glosilo import eostem
 

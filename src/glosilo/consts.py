@@ -456,7 +456,7 @@ NE_STARTING_WORDS: set[str] = {"nederland", "nenio"}
 FAKEOUT_WORDS: set[str] = {"ĉiela", "ĉielo"}
 
 CORE_IMMUNE_CORES: set[str] = (
-     ACX_ENDING_WORDS
+    ACX_ENDING_WORDS
     | AD_ENDING_WORDS
     | AJX_ENDING_WORDS
     | AR_ENDING_WORDS
@@ -536,12 +536,12 @@ COMMON_WORDS: set[str] = {
     "kontraŭ",
     "je",
     # Derivations from prepositions
-    #"posta",
-    #"poste",
-    #"antaŭa",
-    #"antaŭe",
-    #"kontraŭa",
-    #"kontraŭe",
+    # "posta",
+    # "poste",
+    # "antaŭa",
+    # "antaŭe",
+    # "kontraŭa",
+    # "kontraŭe",
     # Pronouns
     "mi",
     "mia",

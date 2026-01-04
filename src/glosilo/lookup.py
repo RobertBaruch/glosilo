@@ -51,11 +51,15 @@ def load_senses_from_xml(article_id: str) -> dict[str, dict[str, str]]:
     try:
         # Call gensenses.py with retavortaropy's venv Python to generate senses
         result = subprocess.run(
-            ["F:/retavortaropy/.venv/Scripts/python.exe", "F:/retavortaropy/gensenses.py", str(xml_path)],
+            [
+                "F:/retavortaropy/.venv/Scripts/python.exe",
+                "F:/retavortaropy/gensenses.py",
+                str(xml_path),
+            ],
             capture_output=True,
             text=True,
             timeout=10,
-            encoding='utf-8'
+            encoding="utf-8",
         )
 
         if result.returncode == 0:
@@ -165,7 +169,11 @@ def lookup_word_definitions(
         for i in range(len(cored.suffixes) - 1, -1, -1):
             # Reconstruct with fewer suffixes
             partial_suffixes = cored.suffixes[:i]
-            partial_base = "".join(cored.prefixes) + "".join(cored.core) + "".join(partial_suffixes)
+            partial_base = (
+                "".join(cored.prefixes)
+                + "".join(cored.core)
+                + "".join(partial_suffixes)
+            )
 
             lookup_word, article_id = try_lookup_with_endings(partial_base, kap_dict)
             if lookup_word and article_id:
@@ -176,8 +184,12 @@ def lookup_word_definitions(
                     result["lookup_word"] = lookup_word
                     result["article_id"] = article_id
                     # Use consistent structure: core -> {lookup_word -> definitions}
-                    core_word = cored.core[0] if len(cored.core) == 1 else "|".join(cored.core)
-                    result["definitions"] = {core_word: {lookup_word: senses[lookup_word]}}
+                    core_word = (
+                        cored.core[0] if len(cored.core) == 1 else "|".join(cored.core)
+                    )
+                    result["definitions"] = {
+                        core_word: {lookup_word: senses[lookup_word]}
+                    }
                     return result
 
     # Strategy 3: Try looking up cores
@@ -198,7 +210,9 @@ def lookup_word_definitions(
                 senses = load_senses_from_xml(article_id)
                 if core_with_ending in senses:
                     # Structure: core -> {lookup_word -> {sense_num -> definition}}
-                    core_definitions[core_part] = {core_with_ending: senses[core_with_ending]}
+                    core_definitions[core_part] = {
+                        core_with_ending: senses[core_with_ending]
+                    }
                     continue
 
             # If not found with preferred ending, try other endings
@@ -268,9 +282,7 @@ def main() -> None:
         )
         print("\nExamples:", file=sys.stderr)
         print("  python -m glosilo.lookup parolanto", file=sys.stderr)
-        print(
-            '  python -m glosilo.lookup "unu du bonfaras, kie?"', file=sys.stderr
-        )
+        print('  python -m glosilo.lookup "unu du bonfaras, kie?"', file=sys.stderr)
         sys.exit(1)
 
     words: list[str] = []

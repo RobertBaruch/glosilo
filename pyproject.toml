@@ -14,8 +14,13 @@ classifiers = [
     "License :: OSI Approved :: Apache License",
     "Operating System :: OS Independent",
 ]
-requires-python = ">=3.8"
+requires-python = ">=3.13"
 license = {text="Apache License, Version 2.0"}
+dependencies = [
+    "jsonpath-ng>=1.7.0",
+    "lxml>=6.0.2",
+    "tqdm>=4.67.1",
+]
 
 [tool.setuptools.dynamic]
 version = { attr = "glosilo.VERSION" }
@@ -27,8 +32,13 @@ namespaces = false
 
 [dependency-groups]
 dev = [
-    "lxml>=6.0.2",
+    "types-lxml>=2026.1.1",
 ]
 
 [project.scripts]
 stem = "glosilo.stem:main"
+
+[tool.mypy]
+plugins = ["mypy_plugin_lxml.main"]
+
+[tool.black]

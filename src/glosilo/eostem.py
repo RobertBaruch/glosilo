@@ -323,7 +323,9 @@ class Stemmer:
                 compound_parts = None
                 if reconstructed_root not in rad_dict:
                     # Try compound splitting
-                    compound_parts = self._try_split_compound(reconstructed_root, rad_dict)
+                    compound_parts = self._try_split_compound(
+                        reconstructed_root, rad_dict
+                    )
 
                 if reconstructed_root in rad_dict or compound_parts:
                     # This is a valid configuration
@@ -367,7 +369,10 @@ class Stemmer:
                                 score_penalty = 1000
 
                         # Also penalize "ig" or "ul" as cores when "ne" is a prefix
-                        if reconstructed_root in ["ig", "ul"] and "ne" in stripped_prefixes:
+                        if (
+                            reconstructed_root in ["ig", "ul"]
+                            and "ne" in stripped_prefixes
+                        ):
                             score_penalty = 1000
 
                     deconstructions.append(
@@ -403,7 +408,9 @@ class Stemmer:
                 compound_parts = None
                 if reconstructed_root not in rad_dict:
                     # Try compound splitting
-                    compound_parts = self._try_split_compound(reconstructed_root, rad_dict)
+                    compound_parts = self._try_split_compound(
+                        reconstructed_root, rad_dict
+                    )
 
                 if reconstructed_root in rad_dict or compound_parts:
                     stripped_prefixes = no_prep_temp_prefixes[
@@ -435,7 +442,10 @@ class Stemmer:
                             else:
                                 score_penalty = 1000
 
-                        if reconstructed_root in ["ig", "ul"] and "ne" in stripped_prefixes:
+                        if (
+                            reconstructed_root in ["ig", "ul"]
+                            and "ne" in stripped_prefixes
+                        ):
                             score_penalty = 1000
 
                     deconstructions.append(

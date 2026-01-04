@@ -44,6 +44,7 @@ class CoredWord:
 
     def __str__(self) -> str:
         from glosilo.eostem import core_display
+
         parts = ", ".join(str(part) for part in self.parts)
         core_str = core_display(self.core)
         return (
