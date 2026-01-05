@@ -2,10 +2,11 @@
 Tests for glosilo.lookup functionality using pytest framework.
 """
 
+import io
 import json
 import pathlib
 from typing import Any
-from unittest.mock import Mock, patch, mock_open
+from unittest.mock import MagicMock, Mock, patch, mock_open
 
 import pytest
 
@@ -20,7 +21,7 @@ from glosilo.lookup import (
     lookup_words,
     convert_to_results,
     load_kap_dictionary,
-    load_senses_from_xml,
+    load_senses,
 )
 from glosilo.structs import CoredWord
 
@@ -175,28 +176,34 @@ class TestLoadKapDictionary:
 class TestLoadSensesFromXml:
     """Test the load_senses_from_xml function."""
 
-    @patch("gensenses.json_lookup")
+    @patch("zipfile.ZipFile")
     @patch("pathlib.Path.exists", return_value=True)
-    def test_load_existing_xml(self, mock_exists, mock_json_lookup):
-        """Test loading senses from an existing XML file."""
+    def test_load_existing_xml(self, mock_exists, mock_zipfile):
+        """Test loading senses from an existing JSON file in zip."""
         mock_senses = {"paroli": {"1": "to speak", "2": "to talk"}}
-        mock_json_lookup.return_value = mock_senses
 
-        result = load_senses_from_xml("parol")
+        # Mock the zip file operations
+        mock_zip = MagicMock()
+        mock_zipfile.return_value.__enter__.return_value = mock_zip
+        mock_zip.namelist.return_value = ["parol.json"]
+        mock_zip.open.return_value.__enter__.return_value = io.BytesIO(
+            json.dumps(mock_senses).encode('utf-8')
+        )
+
+        result = load_senses("parol")
         assert result == mock_senses
-        mock_json_lookup.assert_called_once()
 
     @patch("pathlib.Path.exists", return_value=False)
     def test_xml_not_exists(self, mock_exists):
-        """Test when XML file does not exist."""
-        result = load_senses_from_xml("nonexistent")
+        """Test when zip file does not exist."""
+        result = load_senses("nonexistent")
         assert result == {}
 
-    @patch("gensenses.json_lookup", side_effect=Exception("Parse error"))
+    @patch("zipfile.ZipFile", side_effect=Exception("Zip error"))
     @patch("pathlib.Path.exists", return_value=True)
-    def test_exception_handling(self, mock_exists, mock_json_lookup):
-        """Test exception handling when loading XML fails."""
-        result = load_senses_from_xml("parol")
+    def test_exception_handling(self, mock_exists, mock_zipfile):
+        """Test exception handling when loading from zip fails."""
+        result = load_senses("parol")
         assert result == {}
 
 

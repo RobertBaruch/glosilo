@@ -363,6 +363,11 @@ def main() -> None:
         default=None,
         help="Output JSON file path (default: write to console)",
     )
+    parser.add_argument(
+        "--output_dir",
+        default=None,
+        help="Output directory for JSON files (one per XML file with .json extension)",
+    )
     args = parser.parse_args()
 
     input_path = pathlib.Path(args.dir)
@@ -372,6 +377,46 @@ def main() -> None:
             input_path = file
         else:
             input_path = input_path.joinpath(file)
+
+    # Handle --output_dir option
+    if args.output_dir:
+        output_dir = pathlib.Path(args.output_dir)
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+        if not input_path.exists():
+            print(f"Error: Path {input_path} not found.")
+            return
+
+        # Check if it's a file or directory
+        if input_path.is_file():
+            xml_files = [input_path]
+        elif input_path.is_dir():
+            xml_files = list(input_path.glob("*.xml"))
+        else:
+            print(f"Error: {input_path} is neither a file nor a directory.")
+            return
+
+        if not xml_files:
+            print(f"No XML files found in {input_path}")
+            return
+
+        # Initialize parser once
+        xml_parser = etree.XMLParser(load_dtd=True, resolve_entities=True)
+        xml_parser.resolvers.add(DTDResolver())
+
+        for xml_file in tqdm(xml_files, desc="Processing XML files", unit="file"):
+            file_senses = process_file(xml_file, xml_parser)
+
+            # Create output filename by replacing .xml with .json
+            output_filename = xml_file.stem + ".json"
+            output_path = output_dir / output_filename
+
+            with open(output_path, "w", encoding="UTF-8") as f:
+                json.dump(file_senses, f, ensure_ascii=False, indent=2)
+
+        print(f"\nProcessed {len(xml_files)} XML files")
+        print(f"Results written to {output_dir}")
+        return
 
     if not args.output:
         # Write to console with UTF-8 encoding - no other output

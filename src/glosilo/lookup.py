@@ -13,15 +13,15 @@ import io
 import json
 import pathlib
 import string
+import zipfile
 from dataclasses import dataclass
 from typing import Any
 
-import gensenses
 from glosilo import eostem
 from glosilo.structs import CoredWord
 
 KAP_DICTIONARY_FILE = "kap_dictionary.json"
-DEFAULT_REVO_FONTO_DIR = "F:/revo-fonto/revo/"
+JSONDATA_ZIP_FILE = "jsondata.zip"
 
 
 @dataclass
@@ -34,6 +34,7 @@ class Definition:
         senses: Dictionary mapping sense numbers to definition text
                 Example: {'1': 'to speak', '2': 'to talk'}
     """
+
     core_word: str
     lookup_word: str
     senses: dict[str, str]
@@ -52,6 +53,7 @@ class LookupResult:
         article_id: The ReVo article identifier (e.g., 'parol', 'kompren')
         definitions: List of definitions (one per core morpheme for compound words)
     """
+
     found: bool
     lookup_method: str | None
     lookup_word: str | None
@@ -73,6 +75,7 @@ class Result:
         ending: The grammatical ending
         lookup: The lookup result containing definitions
     """
+
     word: str
     prefixes: list[str]
     core: list[str]
@@ -90,6 +93,7 @@ class Results:
     Attributes:
         results: List of Result objects, one per analyzed word
     """
+
     results: list[Result]
 
 
@@ -107,8 +111,8 @@ def load_kap_dictionary() -> dict[str, str]:
         return json.load(f)
 
 
-def load_senses_from_xml(article_id: str) -> dict[str, dict[str, str]]:
-    """Load sense definitions by calling gensenses.py via subprocess.
+def load_senses(article_id: str) -> dict[str, dict[str, str]]:
+    """Load sense definitions from JSON file in jsondata.zip.
 
     Args:
         article_id: The article identifier (e.g., "parol", "kompren")
@@ -116,12 +120,21 @@ def load_senses_from_xml(article_id: str) -> dict[str, dict[str, str]]:
     Returns:
         Dictionary mapping kap text to sense dictionaries
     """
-    xml_path = pathlib.Path(DEFAULT_REVO_FONTO_DIR).joinpath(f"{article_id}.xml")
-    if not xml_path.exists():
+    zip_path = pathlib.Path(JSONDATA_ZIP_FILE)
+    if not zip_path.exists():
         return {}
 
+    json_filename = f"{article_id}.json"
+
     try:
-        return gensenses.json_lookup(xml_path)
+        with zipfile.ZipFile(zip_path, "r") as zip_file:
+            # Check if the JSON file exists in the zip
+            if json_filename not in zip_file.namelist():
+                return {}
+
+            # Read and parse the JSON file
+            with zip_file.open(json_filename) as json_file:
+                return json.load(json_file)
     except Exception:
         # Return empty dict on error
         return {}
@@ -187,7 +200,7 @@ def lookup_word_definitions(
     # Strategy 1: Try exact word match
     if word in kap_dict:
         article_id = kap_dict[word]
-        senses = load_senses_from_xml(article_id)
+        senses = load_senses(article_id)
         if word in senses:
             result["found"] = True
             result["lookup_method"] = "exact"
@@ -204,7 +217,7 @@ def lookup_word_definitions(
     base_word = "".join(cored.prefixes) + "".join(cored.core) + "".join(cored.suffixes)
     lookup_word, article_id = try_lookup_with_endings(base_word, kap_dict)
     if lookup_word and article_id:
-        senses = load_senses_from_xml(article_id)
+        senses = load_senses(article_id)
         if lookup_word in senses:
             result["found"] = True
             result["lookup_method"] = "with_ending"
@@ -232,7 +245,7 @@ def lookup_word_definitions(
 
             lookup_word, article_id = try_lookup_with_endings(partial_base, kap_dict)
             if lookup_word and article_id:
-                senses = load_senses_from_xml(article_id)
+                senses = load_senses(article_id)
                 if lookup_word in senses:
                     result["found"] = True
                     result["lookup_method"] = "suffix_stripped"
@@ -260,7 +273,7 @@ def lookup_word_definitions(
             core_with_ending = core_part + cored.preferred_ending
             if core_with_ending in kap_dict:
                 article_id = kap_dict[core_with_ending]
-                senses = load_senses_from_xml(article_id)
+                senses = load_senses(article_id)
                 if core_with_ending in senses:
                     # Structure: core -> {lookup_word -> {sense_num -> definition}}
                     core_definitions[core_part] = {
@@ -271,7 +284,7 @@ def lookup_word_definitions(
             # If not found with preferred ending, try other endings
             core_lookup, core_article_id = try_lookup_with_endings(core_part, kap_dict)
             if core_lookup and core_article_id:
-                senses = load_senses_from_xml(core_article_id)
+                senses = load_senses(core_article_id)
                 if core_lookup in senses:
                     # Structure: core -> {lookup_word -> {sense_num -> definition}}
                     core_definitions[core_part] = {core_lookup: senses[core_lookup]}
@@ -320,6 +333,7 @@ def lookup_word_to_dict(
     result["lookup"] = lookup_result
 
     return result
+
 
 def lookup_words(words: str) -> list[dict[str, Any]]:
     _words: list[str] = []
@@ -375,9 +389,7 @@ def convert_to_results(lookup_data: list[dict[str, Any]]) -> Results:
             for lookup_word, senses in lookup_words_dict.items():
                 definitions.append(
                     Definition(
-                        core_word=core_word,
-                        lookup_word=lookup_word,
-                        senses=senses
+                        core_word=core_word, lookup_word=lookup_word, senses=senses
                     )
                 )
 
@@ -387,7 +399,7 @@ def convert_to_results(lookup_data: list[dict[str, Any]]) -> Results:
             lookup_method=lookup_dict["lookup_method"],
             lookup_word=lookup_dict["lookup_word"],
             article_id=lookup_dict["article_id"],
-            definitions=definitions
+            definitions=definitions,
         )
 
         # Create Result
@@ -397,12 +409,13 @@ def convert_to_results(lookup_data: list[dict[str, Any]]) -> Results:
             core=item["core"],
             suffixes=item["suffixes"],
             ending=item["ending"],
-            lookup=lookup_result
+            lookup=lookup_result,
         )
 
         result_list.append(result)
 
     return Results(results=result_list)
+
 
 def main() -> None:
     """Main entry point for the lookup command."""
@@ -421,6 +434,7 @@ def main() -> None:
         sys.exit(1)
 
     print(json.dumps(lookup_words(sys.argv[1]), ensure_ascii=False, indent=2))
+
 
 if __name__ == "__main__":
     main()
