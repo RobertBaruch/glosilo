@@ -31,6 +31,9 @@ where = ["src"]
 include = ["glosilo*"]
 namespaces = false
 
+[tool.setuptools.package-data]
+"glosilo.data" = ["*"]
+
 [dependency-groups]
 dev = [
     "pytest>=9.0.2",

@@ -4,15 +4,16 @@ This module contains functions for stemming Esperanto words by stripping
 prefixes, suffixes, and endings to find the core/root of a word.
 """
 
+from importlib.resources import files
 import json
-from pathlib import Path
+
 from glosilo import consts
 from glosilo import structs
 
 
 DEBUGWORD = ""
-RAD_DICTIONARY_PATH = Path("F:/retavortaropy/rad_dictionary.json")
-KAP_DICTIONARY_PATH = Path("F:/retavortaropy/kap_dictionary.json")
+RAD_DICTIONARY_FILE = "rad_dictionary.json"
+KAP_DICTIONARY_FILE = "kap_dictionary.json"
 
 
 class Stemmer:
@@ -31,8 +32,11 @@ class Stemmer:
         Raises:
 
         """
-        with open(RAD_DICTIONARY_PATH, "r", encoding="utf-8") as f:
-            self._rad_dictionary_cache = json.load(f)
+        self._rad_dictionary_cache = json.loads(
+            files("glosilo.data")
+            .joinpath(RAD_DICTIONARY_FILE)
+            .read_text(encoding="utf-8")
+        )
 
     def get_rad_dictionary(self) -> dict[str, str]:
         """Returns the rad dictionary."""
@@ -44,8 +48,11 @@ class Stemmer:
         Raises:
 
         """
-        with open(KAP_DICTIONARY_PATH, "r", encoding="utf-8") as f:
-            self._kap_dictionary_cache = json.load(f)
+        self._kap_dictionary_cache = json.loads(
+            files("glosilo.data")
+            .joinpath(KAP_DICTIONARY_FILE)
+            .read_text(encoding="utf-8")
+        )
 
     def get_kap_dictionary(self) -> dict[str, str]:
         """Returns the kap dictionary."""

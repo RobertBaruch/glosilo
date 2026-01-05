@@ -8,19 +8,18 @@ Usage:
     python -m glosilo.lookup "sentence with multiple words"
 """
 
-import sys
+from dataclasses import dataclass
+from importlib.resources import files
 import io
 import json
-import pathlib
 import string
-import zipfile
-from dataclasses import dataclass
+import sys
 from typing import Any
+import zipfile
 
 from glosilo import eostem
 from glosilo.structs import CoredWord
 
-KAP_DICTIONARY_FILE = "kap_dictionary.json"
 JSONDATA_ZIP_FILE = "jsondata.zip"
 
 
@@ -97,20 +96,6 @@ class Results:
     results: list[Result]
 
 
-def load_kap_dictionary() -> dict[str, str]:
-    """Load the kap_dictionary.json from retavortaropy.
-
-    Returns:
-        Dictionary mapping kap text to article identifiers
-    """
-    kap_dict_path = pathlib.Path(KAP_DICTIONARY_FILE)
-    if not kap_dict_path.exists():
-        return {}
-
-    with open(kap_dict_path, "r", encoding="utf-8") as f:
-        return json.load(f)
-
-
 def load_senses(article_id: str) -> dict[str, dict[str, str]]:
     """Load sense definitions from JSON file in jsondata.zip.
 
@@ -120,24 +105,18 @@ def load_senses(article_id: str) -> dict[str, dict[str, str]]:
     Returns:
         Dictionary mapping kap text to sense dictionaries
     """
-    zip_path = pathlib.Path(JSONDATA_ZIP_FILE)
-    if not zip_path.exists():
-        return {}
-
-    json_filename = f"{article_id}.json"
-
-    try:
-        with zipfile.ZipFile(zip_path, "r") as zip_file:
+    json_filename = f"jsondata/{article_id}.json"
+    zip_path = files("glosilo.data").joinpath(JSONDATA_ZIP_FILE)
+    with zip_path.open("rb") as f:
+        with zipfile.ZipFile(f) as zip_file:
             # Check if the JSON file exists in the zip
             if json_filename not in zip_file.namelist():
+                print(f"Did not find {json_filename}")
                 return {}
 
             # Read and parse the JSON file
             with zip_file.open(json_filename) as json_file:
                 return json.load(json_file)
-    except Exception:
-        # Return empty dict on error
-        return {}
 
 
 def try_lookup_with_endings(
@@ -353,7 +332,7 @@ def lookup_words(words: str) -> list[dict[str, Any]]:
     stemmer = eostem.Stemmer()
 
     # Load dictionaries
-    kap_dict = load_kap_dictionary()
+    kap_dict = stemmer.get_kap_dictionary()
     rad_dict = stemmer.get_rad_dictionary()
 
     # Look up each word
