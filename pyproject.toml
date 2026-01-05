@@ -11,11 +11,10 @@ authors = [{ name = "Zekri Drako", email = "robert.c.baruch@gmail.com" }]
 keywords = ["Esperanto", "glossing", "NLP"]
 classifiers = [
     "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: Apache License",
     "Operating System :: OS Independent",
 ]
 requires-python = ">=3.13"
-license = {text="Apache License, Version 2.0"}
+license = "Apache-2.0"
 dependencies = [
     "fastmcp<3",
     "jsonpath-ng>=1.7.0",
